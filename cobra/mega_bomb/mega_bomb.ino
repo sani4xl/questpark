@@ -1,5 +1,8 @@
 #include <SPI.h> // Include the Arduino SPI library
+#include <Servo.h>
 
+Servo explodeServo;
+int explodeServoPin = 2;
 
 // lift stuff
 int MOTOR_A = 30; // Input3 подключен к выводу 5 
@@ -45,6 +48,8 @@ int defuseOptions[2][4] = {{4, 7, 5, 6},
 
 boolean isGoodDef = false;
 boolean isWin = false;
+boolean isLost = false;
+boolean exploded = false;
 int countDef = 0;
 
 /* Values to prevent the button from bouncing */
@@ -69,7 +74,13 @@ void setup()
   
   Serial.begin(9600);
   
+   pinMode(explodeServoPin, OUTPUT); 
+   explodeServo.attach(explodeServoPin);
+   explodeServo.write(90);
+   delay(1000);
+   explodeServo.detach();
   // init lift
+  
    pinMode (SPEEDIN, OUTPUT); 
    pinMode (MOTOR_A, OUTPUT);
    pinMode (MOTOR_B, OUTPUT);
@@ -97,6 +108,17 @@ void setup()
   clearDisplaySPI();  
 }
 
+void explode(){
+  if(exploded){
+    return;
+  }
+  
+  exploded = true;
+  explodeServo.attach(explodeServoPin);
+  explodeServo.write(0);
+  delay(2000);
+  explodeServo.detach(); 
+}
 
 void loop()
 {
@@ -106,13 +128,19 @@ void loop()
 //  }
   lifting();
   counting = true; 
-  if (!isWin){
+  if(isLost){
+    explode();
+  }
+  else if (!isWin){
     //evaluateButton();
     count();
-  } else {
+  } 
+  
+  if(isLost || isWin) {
     digitalWrite (ledPin2, LOW);
     digitalWrite (ledPin1, LOW);
     digitalWrite(speakerPin, LOW);
+    
     //noTone(speakerPin);
   }
 }
@@ -234,6 +262,10 @@ void count() {
     //Вывод на дисплей
     displayNumber(currentTimeValue);
     countdownTime = currentTimeValue.toInt(); //Global Time
+    
+    if(secondsLeft <= 0 ){
+      isLost = true;
+    }
     
     if(secondsDisplay == 0 && minutesDisplay == 0) {
       counting = false;
