@@ -22,6 +22,7 @@ int movingDown = false;
 int movingUp = false;
 int liftedUp = false;
 int notLiftedYet = true;
+int bombActivated = false;
 
 int stopperDownState = false;
 int stopperUpState = false;
@@ -39,6 +40,8 @@ const int speakerPin = 3;
 /**/
 /* Possible start point for counting down */
 const int ssPin = 8;
+// MEGA SDI pin = 51
+// mege sck pin = 52
 int countdownOptions[] = {1, 5, 15, 60, 45}; //Possible values to count down from
 int countdownSetting = 0; 
 
@@ -141,7 +144,7 @@ void loop()
     digitalWrite (ledPin1, LOW);
     digitalWrite(speakerPin, LOW);
     
-    //noTone(speakerPin);
+    noTone(speakerPin);
   }
 }
 
@@ -240,9 +243,10 @@ void count() {
     int lastSecond = lastMinute * 60;
     
     int secondsLeft = lastSecond - secondsPassed;
-    if(secondsLeft < secondsLeftForLiftingUp && !liftedUp && notLiftedYet ){
+    if(secondsLeft < secondsLeftForLiftingUp && !bombActivated){// !liftedUp && notLiftedYet ){
       movingUp = true;
       notLiftedYet = false;
+      bombActivated = true;
     }
     //Serial.println(secondsLeft);  
     
@@ -295,7 +299,10 @@ void timerC(){
    s7sSendStringSPI((String)tempString);   
    //beep(50);
    dec(counter);
-   led(counter);   
+   
+   if(bombActivated){
+     led(counter);
+   }   
   
  }
  
