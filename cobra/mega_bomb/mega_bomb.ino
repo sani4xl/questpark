@@ -12,6 +12,7 @@ int SPEEDIN = 28;
 const int buttonUp = 22; 
 const int buttonDown = 24; 
 
+
 const int stopperDown = 36; 
 const int stopperUp = 34; 
 
@@ -43,17 +44,30 @@ const int ssPin = 8;
 // MEGA SDI pin = 51
 // mege sck pin = 52
 int countdownOptions[] = {1, 5, 15, 60, 45}; //Possible values to count down from
-int countdownSetting = 0; 
+int countdownSetting = 3; 
 
-int cablePin[] = {4, 5, 6, 7};
+/*int cablePin[] = {4, 5, 6, 7};
 int defuseOptions[2][4] = {{4, 7, 5, 6},
                            {0, 0, 0, 0}}; 
+*/
+
+const int wire1Pin = 4;
+const int wire2Pin = 5;
+const int wire3Pin = 6;
+const int wire4Pin = 7;
+
+int defuseOptions[2][4] = {{wire1Pin, wire2Pin, wire3Pin, wire4Pin},
+                           {0, 0, 0, 0}};
+long subDefuseTime = 0;
+int isBombDefused = 0;
+int wireCutIndex = 0 ;                           
 
 boolean isGoodDef = false;
 boolean isWin = false;
 boolean isLost = false;
 boolean exploded = false;
 int countDef = 0;
+int wrongWireExtraTime = 20;
 
 /* Values to prevent the button from bouncing */
 int buttonState;             // the current reading from the input pin
@@ -82,6 +96,8 @@ void setup()
    explodeServo.write(90);
    delay(1000);
    explodeServo.detach();
+   
+   counting = true;
   // init lift
   
    pinMode (SPEEDIN, OUTPUT); 
@@ -99,7 +115,7 @@ void setup()
   pinMode(ledPin2, OUTPUT);
   pinMode(speakerPin, OUTPUT);
   
-  //initCable();
+  initCable();
   // -------- SPI initialization
   pinMode(ssPin, OUTPUT);  // Set the SS pin as an output
   digitalWrite(ssPin, HIGH);  // Set the SS pin HIGH
@@ -109,6 +125,51 @@ void setup()
   // --------
 
   clearDisplaySPI();  
+}
+
+void initCable(){
+  pinMode(wire1Pin, INPUT);
+  pinMode(wire2Pin, INPUT);
+  pinMode(wire3Pin, INPUT);
+  pinMode(wire4Pin, INPUT);
+}
+
+
+void checkWires(){
+  for(int i  = 0; i < 4; i++){
+    int isWireOn = digitalRead(defuseOptions[0][i]);
+    if(defuseOptions[1][i]){
+      isWireOn = false;
+    }
+    
+    if(!isWireOn){
+      if(!defuseOptions[1][i]){
+        defuseOptions[1][i] = defuseOptions[1][i] + 1;
+        Serial.print(i);
+        Serial.println (" has been cut");
+        if(i == wireCutIndex){
+          wireCutIndex ++;  
+        }
+        else{
+          Serial.println (" WRONG!!!");
+          subDefuseTime += wrongWireExtraTime;
+          timerRunDown();
+        }
+        delay(100);
+        return;
+      }
+      else{
+        if(i == wireCutIndex){
+          wireCutIndex ++;
+        }
+      }
+    }
+  }
+  
+  if(wireCutIndex >= 4){
+    isBombDefused = true; 
+    //Serial.println (subDefuseTime);
+  }
 }
 
 void explode(){
@@ -130,12 +191,13 @@ void loop()
 //     counting = true; 
 //  }
   lifting();
-  counting = true; 
+   
   if(isLost){
     explode();
   }
   else if (!isWin){
     //evaluateButton();
+    checkWires();
     count();
   } 
   
@@ -236,6 +298,7 @@ void count() {
   if (counting){
     unsigned long now = millis();
     int secondsPassed = (now-lastStartTime)/1000;
+    secondsPassed += subDefuseTime * 60;
     
     
     
@@ -270,6 +333,9 @@ void count() {
     if(secondsLeft <= 0 ){
       isLost = true;
     }
+    else if(isBombDefused){
+     isWin = true; 
+    }
     
     if(secondsDisplay == 0 && minutesDisplay == 0) {
       counting = false;
@@ -280,16 +346,16 @@ void count() {
 
 
 
-void timerC(){
+void timerRunDown(){
   
   int var = 0;
   int cnt = 0;  
   
   while(var < 1000){
-      cnt = countdownTime - var;
-      displayNumber((String)cnt);
-  var++;
- }
+    cnt = countdownTime - var;
+    displayNumber((String)cnt);
+    var++;
+  }
 }
   //
   void displayNumber(String line)

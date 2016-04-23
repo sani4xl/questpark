@@ -29,6 +29,7 @@ long debounceDelay = 50;    // the debounce time; increase if the output flicker
 /* Values for storing a count down session */
 long lastStartTime = 0;    //When did we start
 long newDefuseTime = 0;
+long subDefuseTime = 0;
 long countdownTime = 0;
 boolean counting = false;  //Are we counting at this moment?
 boolean active = true;     //Is the clock active or suspended (active can be "not yet counting, but the button is pressed")

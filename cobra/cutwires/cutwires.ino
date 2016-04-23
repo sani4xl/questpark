@@ -11,6 +11,7 @@ int defuseOptions[2][4] = {{wire1Pin, wire2Pin, wire3Pin, wire4Pin},
 //const int ledPin =  13;      // the number of the LED pin
 
 long subDefuseTime = 0;
+int isBombDefused = 0;
 int wireCutIndex = 0 ;
 
 // variables will change:
@@ -51,6 +52,7 @@ void checkWires(){
           Serial.println (" WRONG!!!");
           subDefuseTime += 10;
         }
+        delay(100);
       }
       else{
         if(i == wireCutIndex){
@@ -61,6 +63,7 @@ void checkWires(){
   }
   
   if(wireCutIndex >= 4){
+    isBombDefused = true; 
     Serial.println (subDefuseTime);
   }
 }
