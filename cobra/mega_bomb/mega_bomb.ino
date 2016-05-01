@@ -1,8 +1,16 @@
 #include <SPI.h> // Include the Arduino SPI library
 #include <Servo.h>
+#include "TM1637.h"
 
 Servo explodeServo;
-int explodeServoPin = 2;
+int explodeServoPin = 3;
+
+
+#define MAIN_SCREEN_CLK 47//pins definitions for TM1637 and can be changed to other ports       
+#define MAIN_SCREEN_DIO 45
+TM1637 tm1637(MAIN_SCREEN_CLK, MAIN_SCREEN_DIO);
+int8_t mainTimeDisp[] = {0x00,0x00,0x00,0x00};
+char mainScreenBuffer[4];
 
 // lift stuff
 int MOTOR_A = 30; // Input3 подключен к выводу 5 
@@ -11,6 +19,8 @@ int SPEEDIN = 28;
 
 const int buttonUp = 22; 
 const int buttonDown = 24; 
+
+const int buttonStrartPin = 49; 
 
 
 const int stopperDown = 36; 
@@ -36,7 +46,7 @@ const int buttonPin = 2;    // the number of the pushbutton pin
 const int ledPin1 = 9; 
 const int ledPin2 = 10; 
 
-const int speakerPin = 3;
+const int speakerPin = 2;
 
 /**/
 /* Possible start point for counting down */
@@ -44,7 +54,7 @@ const int ssPin = 8;
 // MEGA SDI pin = 51
 // mege sck pin = 52
 int countdownOptions[] = {1, 5, 15, 60, 45}; //Possible values to count down from
-int countdownSetting = 3; 
+int countdownSetting = 0; 
 
 /*int cablePin[] = {4, 5, 6, 7};
 int defuseOptions[2][4] = {{4, 7, 5, 6},
@@ -92,10 +102,10 @@ void setup()
   Serial.begin(9600);
   
    pinMode(explodeServoPin, OUTPUT); 
-   explodeServo.attach(explodeServoPin);
-   explodeServo.write(90);
-   delay(1000);
-   explodeServo.detach();
+   //explodeServo.attach(explodeServoPin);
+   //explodeServo.write(90);
+   //delay(1000);
+   //explodeServo.detach();
    
    counting = true;
   // init lift
@@ -106,6 +116,7 @@ void setup()
  
    pinMode(buttonUp, INPUT);
    pinMode(buttonDown, INPUT);
+   pinMode(buttonStrartPin, INPUT);
    pinMode(stopperDown, INPUT);
    pinMode(stopperUp, INPUT);
   
@@ -117,6 +128,78 @@ void setup()
   
   initCable();
   // -------- SPI initialization
+  
+  
+  initScreens();
+}
+
+void startGame(){
+   
+  //clearDisplaySPI(); 
+  /*
+  counting = true;
+  
+  movingDown = false;
+  movingUp = false;
+  liftedUp = false;
+  notLiftedYet = true;
+  bombActivated = false;
+
+  stopperDownState = false;
+  stopperUpState = false;
+  counter = 0;
+  
+  lastStartTime = 0;    //When did we start
+  newDefuseTime = 0;
+  countdownTime = 0;
+  counting = false;  //Are we counting at this moment?
+  active = true; 
+  exploded = false;
+  
+  defuseOptions[1][0] = 0;
+  defuseOptions[1][1] = 0;
+  defuseOptions[1][2] = 0;
+  defuseOptions[1][3] = 0;
+  
+  subDefuseTime = 0;
+  isBombDefused = 0;
+  wireCutIndex = 0 ;                           
+
+  isGoodDef = false;
+  
+  countDef = 0;
+  */
+  
+  defuseOptions[1][0] = 0;
+  defuseOptions[1][1] = 0;
+  defuseOptions[1][2] = 0;
+  defuseOptions[1][3] = 0;
+  
+  notLiftedYet = false;
+  bombActivated = false;
+  
+  
+  
+  isBombDefused = false;
+  counting = true;
+  active = true;
+  
+  
+  
+  wireCutIndex = 0 ;
+  isLost = false;
+  lastStartTime = millis();
+  isWin = false;
+  exploded = false;
+  //count();
+  
+  delay(500);
+  
+}
+
+void initScreens(){
+  tm1637.set();//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
+  tm1637.init();  
   pinMode(ssPin, OUTPUT);  // Set the SS pin as an output
   digitalWrite(ssPin, HIGH);  // Set the SS pin HIGH
   
@@ -124,7 +207,7 @@ void setup()
   SPI.setClockDivider(SPI_CLOCK_DIV64);  // Slow down SPI clock
   // --------
 
-  clearDisplaySPI();  
+  clearDisplaySPI(); 
 }
 
 void initCable(){
@@ -178,10 +261,20 @@ void explode(){
   }
   
   exploded = true;
-  explodeServo.attach(explodeServoPin);
-  explodeServo.write(0);
-  delay(2000);
-  explodeServo.detach(); 
+  SPI.end();
+  digitalWrite (ledPin2, LOW);
+    digitalWrite (ledPin1, LOW);
+    digitalWrite(speakerPin, LOW);
+    
+  digitalWrite(ssPin, LOW);  
+    
+  digitalWrite(explodeServoPin, HIGH); 
+  //explodeServo.attach(explodeServoPin);
+  //explodeServo.write(0);
+  // let smoke go out for 3 sec
+  movingUp = false;
+  delay(3000);
+  digitalWrite(explodeServoPin, LOW); 
 }
 
 void loop()
@@ -190,10 +283,12 @@ void loop()
 //  if (buttonState == HIGH) {   
 //     counting = true; 
 //  }
+  Serial.println("loop");
   lifting();
    
   if(isLost){
     explode();
+    
   }
   else if (!isWin){
     //evaluateButton();
@@ -202,11 +297,12 @@ void loop()
   } 
   
   if(isLost || isWin) {
+    Serial.println("lost or win");
     digitalWrite (ledPin2, LOW);
     digitalWrite (ledPin1, LOW);
     digitalWrite(speakerPin, LOW);
     
-    noTone(speakerPin);
+    //noTone(speakerPin);
   }
 }
 
@@ -216,7 +312,7 @@ void lifting(){
      
   }
   else{
-    Serial.print("down reached");  
+    Serial.println("down reached");  
   }
  
  stopperUpState = digitalRead(stopperUp);
@@ -227,7 +323,13 @@ void lifting(){
   } 
   else{
     liftedUp = true;
-    Serial.print("up reached");  
+    Serial.println("up reached");  
+  }
+  
+  if(digitalRead(buttonStrartPin)){
+    //Serial.println("start button pressed");  
+    startGame();
+    
   }
   
   buttonUpState = digitalRead(buttonUp);
@@ -294,7 +396,9 @@ void lifting(){
 }
 
 void count() {
-
+  
+  //Serial.print(counting);
+  
   if (counting){
     unsigned long now = millis();
     int secondsPassed = (now-lastStartTime)/1000;
@@ -303,7 +407,7 @@ void count() {
     
     
     int lastMinute = countdownOptions[countdownSetting];
-    int lastSecond = lastMinute * 60;
+    int lastSecond = lastMinute * 60 - 50; // ???
     
     int secondsLeft = lastSecond - secondsPassed;
     if(secondsLeft < secondsLeftForLiftingUp && !bombActivated){// !liftedUp && notLiftedYet ){
@@ -314,21 +418,37 @@ void count() {
     //Serial.println(secondsLeft);  
     
     
-    int secondsDisplay = (lastSecond - secondsPassed) % 60;
-    int minutesDisplay = (((lastMinute - newDefuseTime) * 60) - secondsPassed) / 60;
+    //int secondsDisplay = (lastSecond - secondsPassed) % 60;
+    int minutesDisplay = floor( secondsLeft / 60);
+    
+    //(((lastMinute - newDefuseTime) * 60) - secondsPassed) / 60;
+    
+    int secondsDisplay = secondsLeft - minutesDisplay * 60;
+    //(lastSecond - secondsPassed) % 60;
+    
+    //Serial.println(" counting ");
+    
     
     String currentTimeValue = "";
-    // Serial.print(minutesDisplay);
-    currentTimeValue += minutesDisplay;
+    
+    currentTimeValue += (String)minutesDisplay;
     // Serial.print(":");
     if(secondsDisplay < 10) {
     //  Serial.print("0");
       currentTimeValue += "0";
     }
-    currentTimeValue += secondsDisplay;
+    currentTimeValue += (String)secondsDisplay;
+    
+    Serial.print(secondsLeft);
+    Serial.print( " ");
+    Serial.println(currentTimeValue);
     //Вывод на дисплей
     displayNumber(currentTimeValue);
     countdownTime = currentTimeValue.toInt(); //Global Time
+    
+    
+    //Serial.print(" ");
+    //Serial.println(secondsDisplay);
     
     if(secondsLeft <= 0 ){
       isLost = true;
@@ -358,14 +478,31 @@ void timerRunDown(){
   }
 }
   //
-  void displayNumber(String line)
-{
+void displayNumber(String line){
+   
+   Serial.println(line); 
    counter = line.toInt();
    sprintf(tempString, "%4d", counter);
-   s7sSendStringSPI((String)tempString);   
+   String timeStringToDispay = (String)tempString;
+   
+   // outputting to bomb screen
+   s7sSendStringSPI(timeStringToDispay);   
    //beep(50);
    dec(counter);
    
+   
+   // outputing to main screen
+   //*
+   timeStringToDispay.toCharArray(mainScreenBuffer, 5);
+   for(int i = 0; i<4; i++){
+    mainTimeDisp[i]= mainScreenBuffer[i] - 48;
+  }
+  
+  tm1637.display(mainTimeDisp); 
+  
+  //*/
+   
+  // leds 
    if(bombActivated){
      led(counter);
    }   
@@ -373,7 +510,15 @@ void timerRunDown(){
  }
  
 void dec(int isEvenNumber){
-   if (isEvenNumber % 2 == 0) { setDecimalsSPI(0b00010000);} else{ setDecimalsSPI(0b00000000);}
+   if (isEvenNumber % 2 == 0) { 
+     
+     setDecimalsSPI(0b00010000);
+     tm1637.point(true);
+ 
+   } else{ 
+     setDecimalsSPI(0b00000000);
+     tm1637.point(false);
+   }
 }
 
 void led(int isEvenNumber){
