@@ -1,9 +1,8 @@
 #include <SPI.h> // Include the Arduino SPI library
-#include <Servo.h>
+//#include <Servo.h>
 #include "TM1637.h"
 
-Servo explodeServo;
-int explodeServoPin = 3;
+int explodePin = 3;
 
 
 #define MAIN_SCREEN_CLK 47//pins definitions for TM1637 and can be changed to other ports       
@@ -46,7 +45,7 @@ const int buttonPin = 2;    // the number of the pushbutton pin
 const int ledPin1 = 9; 
 const int ledPin2 = 10; 
 
-const int speakerPin = 2;
+const int speakerPin = 11;
 
 /**/
 /* Possible start point for counting down */
@@ -90,7 +89,7 @@ long lastStartTime = 0;    //When did we start
 long newDefuseTime = 0;
 long countdownTime = 0;
 boolean counting = false;  //Are we counting at this moment?
-boolean active = true;     //Is the clock active or suspended (active can be "not yet counting, but the button is pressed")
+boolean gameAcitvated = false;     //Is the clock active or suspended (active can be "not yet counting, but the button is pressed")
 //
 
 unsigned int counter = 0;  // This variable will count up to 65k
@@ -101,7 +100,7 @@ void setup()
   
   Serial.begin(9600);
   
-   pinMode(explodeServoPin, OUTPUT); 
+   pinMode(explodePin, OUTPUT); 
    //explodeServo.attach(explodeServoPin);
    //explodeServo.write(90);
    //delay(1000);
@@ -125,6 +124,7 @@ void setup()
   pinMode(ledPin1, OUTPUT);
   pinMode(ledPin2, OUTPUT);
   pinMode(speakerPin, OUTPUT);
+  analogWrite (speakerPin, 255);
   
   initCable();
   // -------- SPI initialization
@@ -182,19 +182,23 @@ void startGame(){
   
   isBombDefused = false;
   counting = true;
-  active = true;
+  gameAcitvated = true;
   
   
   
   wireCutIndex = 0 ;
   isLost = false;
-  lastStartTime = millis();
+  
   isWin = false;
   exploded = false;
   //count();
   
-  delay(500);
+  //delay(500);
+  for(int i = 0 ; i < 1; i++){
+    beep(500);
+  }
   
+  lastStartTime = millis();
 }
 
 void initScreens(){
@@ -261,30 +265,36 @@ void explode(){
   }
   
   exploded = true;
-  SPI.end();
+  //SPI.end();
   digitalWrite (ledPin2, LOW);
     digitalWrite (ledPin1, LOW);
-    digitalWrite(speakerPin, LOW);
+    //digitalWrite(speakerPin, LOW);
     
-  digitalWrite(ssPin, LOW);  
+  //digitalWrite(ssPin, LOW);  
     
-  digitalWrite(explodeServoPin, HIGH); 
+  digitalWrite(explodePin, HIGH); 
   //explodeServo.attach(explodeServoPin);
   //explodeServo.write(0);
   // let smoke go out for 3 sec
   movingUp = false;
   delay(3000);
-  digitalWrite(explodeServoPin, LOW); 
+  digitalWrite(explodePin, LOW); 
 }
 
 void loop()
 {
+  
+   
 //  buttonState = digitalRead(buttonPin);
 //  if (buttonState == HIGH) {   
 //     counting = true; 
 //  }
   Serial.println("loop");
   lifting();
+  
+  if(!gameAcitvated){
+     return;
+   }
    
   if(isLost){
     explode();
@@ -300,7 +310,7 @@ void loop()
     Serial.println("lost or win");
     digitalWrite (ledPin2, LOW);
     digitalWrite (ledPin1, LOW);
-    digitalWrite(speakerPin, LOW);
+    //digitalWrite(speakerPin, LOW);
     
     //noTone(speakerPin);
   }
@@ -459,7 +469,7 @@ void count() {
     
     if(secondsDisplay == 0 && minutesDisplay == 0) {
       counting = false;
-      active = false;
+      gameAcitvated = false;
     }
   } //counting
 }// END count()
@@ -522,8 +532,12 @@ void dec(int isEvenNumber){
 }
 
 void led(int isEvenNumber){
-  if (isEvenNumber % 2 == 0) { digitalWrite (ledPin1, HIGH);digitalWrite (ledPin2, LOW);  tone (speakerPin, 777);
-  } else{ digitalWrite (ledPin1, LOW);digitalWrite (ledPin2, HIGH);digitalWrite(speakerPin, LOW);noTone(speakerPin); }
+  if (isEvenNumber % 2 == 0) { digitalWrite (ledPin1, HIGH);digitalWrite (ledPin2, LOW);  
+  //tone (speakerPin, 777);
+  } else{ digitalWrite (ledPin1, LOW);digitalWrite (ledPin2, HIGH);
+  //digitalWrite(speakerPin, LOW);
+   //noTone(speakerPin); 
+ }
 }
 /***************SPI LIB*********************/
 void s7sSendStringSPI(String toSend)
@@ -564,9 +578,13 @@ void setDecimalsSPI(byte decimals)
 
 void beep(unsigned char delayms){
 
-  tone (speakerPin, 500); //включаем на 500 Гц
+  //tone (speakerPin, 2000); //включаем на 500 Гц
+  //digitalWrite(speakerPin, HIGH);
+  analogWrite (speakerPin, 0);
   delay(delayms); //ждем 100 Мс
-  digitalWrite(speakerPin, LOW);
+  analogWrite (speakerPin, 255);
+  delay(delayms);
+  //digitalWrite(speakerPin, HIGH);
  
   
 }
