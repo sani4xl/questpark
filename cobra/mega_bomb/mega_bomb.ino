@@ -72,6 +72,7 @@ int isBombDefused = 0;
 int wireCutIndex = 0 ;                           
 
 boolean isGoodDef = false;
+boolean canStart = false;
 boolean isWin = false;
 boolean isLost = false;
 boolean exploded = false;
@@ -170,6 +171,11 @@ void startGame(){
   countDef = 0;
   */
   
+  if(!canStart){
+    return;
+  }
+  
+  canStart = false;
   defuseOptions[1][0] = 0;
   defuseOptions[1][1] = 0;
   defuseOptions[1][2] = 0;
@@ -323,6 +329,7 @@ void lifting(){
   }
   else{
     Serial.println("down reached");  
+    canStart = true;
   }
  
  stopperUpState = digitalRead(stopperUp);
@@ -354,6 +361,7 @@ void lifting(){
       movingDown = true;
     }
     
+    canStart = true;
     movingUp = false;
     delay(250);
   }
@@ -417,7 +425,7 @@ void count() {
     
     
     int lastMinute = countdownOptions[countdownSetting];
-    int lastSecond = lastMinute * 60 - 50; // ???
+    int lastSecond = lastMinute * 60; // ???
     
     int secondsLeft = lastSecond - secondsPassed;
     if(secondsLeft < secondsLeftForLiftingUp && !bombActivated){// !liftedUp && notLiftedYet ){
@@ -462,6 +470,7 @@ void count() {
     
     if(secondsLeft <= 0 ){
       isLost = true;
+      displayNumber("0");
     }
     else if(isBombDefused){
      isWin = true; 
@@ -484,6 +493,10 @@ void timerRunDown(){
   while(var < 1000){
     cnt = countdownTime - var;
     displayNumber((String)cnt);
+    if(cnt <= 0){
+      displayNumber("0");
+      break;
+    }
     var++;
   }
 }
