@@ -368,7 +368,7 @@ void lifting(){
      
   }
   else{
-    Serial.println("down reached");  
+    //Serial.println("down reached");  
     canStart = true;
   }
  
@@ -380,7 +380,7 @@ void lifting(){
   } 
   else{
     liftedUp = true;
-    Serial.println("up reached");  
+    //Serial.println("up reached");  
   }
   
   if(digitalRead(buttonStrartPin)){
@@ -429,14 +429,14 @@ void lifting(){
   if(movingDown){
     digitalWrite (MOTOR_A, HIGH);
     digitalWrite (MOTOR_B, LOW);
-    Serial.println("moving down");  
+    //Serial.println("moving down");  
     
   // подаем на вывод ENB управляющий ШИМ сигнал 
   }
   else if(movingUp){
     digitalWrite (MOTOR_A, LOW);
     digitalWrite (MOTOR_B, HIGH);
-    Serial.println("moving up");  
+    //Serial.println("moving up");  
   }
   
   if(movingUp || movingDown ){
@@ -498,8 +498,8 @@ void count() {
     currentTimeValue += (String)secondsDisplay;
     
     Serial.print(secondsLeft);
-    Serial.print( " ");
-    Serial.println(currentTimeValue);
+    //Serial.print( " ");
+    //Serial.println(currentTimeValue);
     //Вывод на дисплей
     displayNumber(currentTimeValue);
     countdownTime = currentTimeValue.toInt(); //Global Time
@@ -510,7 +510,9 @@ void count() {
     
     if(secondsLeft <= 0 ){
       isLost = true;
+      Serial.println("LOST");
       displayNumber("0");
+      explode();
     }
     else if(isBombDefused){
      isWin = true; 
