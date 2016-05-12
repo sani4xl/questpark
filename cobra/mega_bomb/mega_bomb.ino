@@ -2,9 +2,24 @@
 //#include <Servo.h>
 #include "TM1637.h"
 
-int explodePin = 3;
+int explodePin = 43;
 
+// anturage motors
+int liqMotorA = 9;
+int liqMotorB = 10;
+int liqMotorEn = 8;
 
+int cdMotorA = 11;
+int cdMotorB = 12;
+int cdMotorEn = 13;
+
+int liqMotorLastMills = 0;
+int liqMotorStage = 0;
+
+int cdMotorLastMills = 0;
+int cdMotorStage = 0;
+
+// screen
 #define MAIN_SCREEN_CLK 47//pins definitions for TM1637 and can be changed to other ports       
 #define MAIN_SCREEN_DIO 45
 TM1637 tm1637(MAIN_SCREEN_CLK, MAIN_SCREEN_DIO);
@@ -41,15 +56,16 @@ int stopperUpState = false;
 int secondsLeftForLiftingUp = 30;// 60 * 4; // 4 minute
 
 // bomb stuff
-const int buttonPin = 2;    // the number of the pushbutton pin
-const int ledPin1 = 9; 
-const int ledPin2 = 10; 
+//const int buttonPin = 2;    // the number of the pushbutton pin
+const int ledPin1 = 40; 
+const int ledPin2 = 42; 
 
-const int speakerPin = 11;
+const int speakerPin = 2;
 
 /**/
 /* Possible start point for counting down */
-const int ssPin = 8;
+const int ssPin = 38;
+
 // MEGA SDI pin = 51
 // mege sck pin = 52
 int countdownOptions[] = {1, 5, 15, 60, 45}; //Possible values to count down from
@@ -121,10 +137,11 @@ void setup()
    pinMode(stopperUp, INPUT);
   
   // init bomb
-  pinMode(buttonPin, INPUT);
+  //pinMode(buttonPin, INPUT);
   pinMode(ledPin1, OUTPUT);
   pinMode(ledPin2, OUTPUT);
   pinMode(speakerPin, OUTPUT);
+  
   analogWrite (speakerPin, 255);
   
   initCable();
@@ -132,6 +149,23 @@ void setup()
   
   
   initScreens();
+  initAnturageMotors();
+}
+
+void initAnturageMotors(){
+  pinMode(liqMotorEn, OUTPUT);
+  pinMode(liqMotorA, OUTPUT);
+  pinMode(liqMotorB, OUTPUT);
+  
+  pinMode(cdMotorEn, OUTPUT);
+  pinMode(cdMotorA, OUTPUT);
+  pinMode(cdMotorB, OUTPUT);
+  
+  //pinMode(in3, OUTPUT);
+  //pinMode(in4, OUTPUT);
+  //analogWrite(enA, 30);
+  analogWrite(liqMotorEn, 130);
+  analogWrite(cdMotorEn, 45);
 }
 
 void startGame(){
@@ -275,8 +309,11 @@ void explode(){
   digitalWrite (ledPin2, LOW);
     digitalWrite (ledPin1, LOW);
     //digitalWrite(speakerPin, LOW);
+ stopLiqMotor();
+ stopCdMotor();   
     
   //digitalWrite(ssPin, LOW);  
+  isLost = true;
     
   digitalWrite(explodePin, HIGH); 
   //explodeServo.attach(explodeServoPin);
@@ -295,7 +332,7 @@ void loop()
 //  if (buttonState == HIGH) {   
 //     counting = true; 
 //  }
-  Serial.println("loop");
+  
   lifting();
   
   if(!gameAcitvated){
@@ -304,6 +341,7 @@ void loop()
    
   if(isLost){
     explode();
+    Serial.println("LOST");
     
   }
   else if (!isWin){
@@ -313,9 +351,11 @@ void loop()
   } 
   
   if(isLost || isWin) {
-    Serial.println("lost or win");
+    //Serial.println("lost or win");
     digitalWrite (ledPin2, LOW);
     digitalWrite (ledPin1, LOW);
+    stopLiqMotor();
+    stopCdMotor();
     //digitalWrite(speakerPin, LOW);
     
     //noTone(speakerPin);
@@ -528,6 +568,7 @@ void displayNumber(String line){
   // leds 
    if(bombActivated){
      led(counter);
+     anturageMotorsAction();
    }   
   
  }
@@ -602,3 +643,73 @@ void beep(unsigned char delayms){
   
 }
 
+
+
+void anturageMotorsAction()
+{
+ 
+  
+  //liqMotorA
+  unsigned long now = millis() / 1000;
+  long diff = now - liqMotorLastMills;
+
+  
+  if(  diff > 6){
+    liqMotorLastMills = now;
+    liqMotorStage++;
+    if(liqMotorStage > 3){
+      liqMotorStage = 0;
+    }
+  }
+  
+  if(liqMotorStage == 0 ){
+    digitalWrite(liqMotorA, HIGH);
+    digitalWrite(liqMotorB, LOW);
+    stopCdMotor();
+  }
+  else if(liqMotorStage == 2 ){
+    digitalWrite(liqMotorA, LOW);
+    digitalWrite(liqMotorB, HIGH);
+    stopCdMotor();
+  }
+  else {
+    digitalWrite(liqMotorA, LOW);
+    digitalWrite(liqMotorB, LOW);
+  
+    activateCdMotor();
+  }
+  
+} 
+
+void activateCdMotor(){
+  unsigned long now = millis() / 500;
+  
+  long cdDiff = now - cdMotorLastMills;
+  if(  cdDiff > 1){
+    cdMotorLastMills = now;
+    cdMotorStage++;
+    if(cdMotorStage > 1){
+      cdMotorStage = 0;
+    }
+  }
+  
+   if(cdMotorStage == 0 ){
+    digitalWrite(cdMotorA, HIGH);
+    digitalWrite(cdMotorB, LOW);
+  }
+  else if(cdMotorStage == 1 ){
+    digitalWrite(cdMotorA, LOW);
+    digitalWrite(cdMotorB, HIGH);
+  }
+  
+}
+
+void stopCdMotor(){
+  digitalWrite(cdMotorA, LOW);
+  digitalWrite(cdMotorB, LOW);
+}
+
+void stopLiqMotor(){
+  digitalWrite(cdMotorA, LOW);
+  digitalWrite(cdMotorB, LOW);
+}
