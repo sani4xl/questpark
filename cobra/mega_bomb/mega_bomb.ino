@@ -218,7 +218,8 @@ void startGame(){
   notLiftedYet = false;
   bombActivated = false;
   
-  
+  subDefuseTime = 0;
+  newDefuseTime = 0;
   
   isBombDefused = false;
   counting = true;
@@ -234,11 +235,13 @@ void startGame(){
   //count();
   
   //delay(500);
+  
   for(int i = 0 ; i < 1; i++){
     beep(500);
   }
-  
   lastStartTime = millis();
+  
+  
 }
 
 void initScreens(){
@@ -306,11 +309,12 @@ void explode(){
   
   exploded = true;
   //SPI.end();
-  digitalWrite (ledPin2, LOW);
-    digitalWrite (ledPin1, LOW);
+  //digitalWrite (ledPin2, LOW);
+   // digitalWrite (ledPin1, LOW);
     //digitalWrite(speakerPin, LOW);
- stopLiqMotor();
- stopCdMotor();   
+ //stopLiqMotor();
+ //stopCdMotor();   
+  shutDownAnturage();
     
   //digitalWrite(ssPin, LOW);  
   isLost = true;
@@ -322,6 +326,13 @@ void explode(){
   movingUp = false;
   delay(3000);
   digitalWrite(explodePin, LOW); 
+}
+
+void shutDownAnturage(){
+  stopLiqMotor();
+  stopCdMotor();  
+  digitalWrite (ledPin2, LOW);
+  digitalWrite (ledPin1, LOW); 
 }
 
 void loop()
@@ -336,6 +347,7 @@ void loop()
   lifting();
   
   if(!gameAcitvated){
+     
      return;
    }
    
@@ -352,10 +364,7 @@ void loop()
   
   if(isLost || isWin) {
     //Serial.println("lost or win");
-    digitalWrite (ledPin2, LOW);
-    digitalWrite (ledPin1, LOW);
-    stopLiqMotor();
-    stopCdMotor();
+    shutDownAnturage();
     //digitalWrite(speakerPin, LOW);
     
     //noTone(speakerPin);
@@ -508,20 +517,26 @@ void count() {
     //Serial.print(" ");
     //Serial.println(secondsDisplay);
     
-    if(secondsLeft <= 0 ){
+   if(isBombDefused){
+     isWin = true; 
+    }
+    else if(secondsLeft <= 0 ){
       isLost = true;
       Serial.println("LOST");
       displayNumber("0");
+      
+      counting = false;
+      gameAcitvated = false;
+      
       explode();
     }
-    else if(isBombDefused){
-     isWin = true; 
-    }
     
+    /*
     if(secondsDisplay == 0 && minutesDisplay == 0) {
       counting = false;
       gameAcitvated = false;
-    }
+    }*/
+    
   } //counting
 }// END count()
 
@@ -649,7 +664,9 @@ void beep(unsigned char delayms){
 
 void anturageMotorsAction()
 {
- 
+  if( isLost || isWin ){
+    return;
+  }
   
   //liqMotorA
   unsigned long now = millis() / 1000;
@@ -712,6 +729,6 @@ void stopCdMotor(){
 }
 
 void stopLiqMotor(){
-  digitalWrite(cdMotorA, LOW);
-  digitalWrite(cdMotorB, LOW);
+  digitalWrite(liqMotorA, LOW);
+  digitalWrite(liqMotorB, LOW);
 }
