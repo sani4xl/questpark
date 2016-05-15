@@ -3,6 +3,7 @@
 #include "TM1637.h"
 
 int explodePin = 43;
+int doorPin = 41;
 
 // anturage motors
 int liqMotorA = 9;
@@ -118,6 +119,8 @@ void setup()
   Serial.begin(9600);
   
    pinMode(explodePin, OUTPUT); 
+   pinMode(doorPin, OUTPUT); 
+   digitalWrite(doorPin, HIGH);
    //explodeServo.attach(explodeServoPin);
    //explodeServo.write(90);
    //delay(1000);
@@ -240,7 +243,7 @@ void startGame(){
     beep(500);
   }
   lastStartTime = millis();
-  
+  digitalWrite(doorPin, LOW); 
   
 }
 
@@ -320,6 +323,8 @@ void explode(){
   isLost = true;
     
   digitalWrite(explodePin, HIGH); 
+  
+  digitalWrite(doorPin, HIGH); 
   //explodeServo.attach(explodeServoPin);
   //explodeServo.write(0);
   // let smoke go out for 3 sec
