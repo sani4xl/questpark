@@ -4,6 +4,8 @@
 
 int explodePin = 43;
 int doorPin = 41;
+int activationPin = 39;
+int activationButtonState = 0;
 
 // anturage motors
 int liqMotorA = 9;
@@ -121,6 +123,7 @@ void setup()
    pinMode(explodePin, OUTPUT); 
    pinMode(doorPin, OUTPUT); 
    digitalWrite(doorPin, HIGH);
+   pinMode(activationPin, INPUT);
    //explodeServo.attach(explodeServoPin);
    //explodeServo.write(90);
    //delay(1000);
@@ -482,7 +485,11 @@ void count() {
     int lastSecond = lastMinute * 60; // ???
     
     int secondsLeft = lastSecond - secondsPassed;
-    if(secondsLeft < secondsLeftForLiftingUp && !bombActivated){// !liftedUp && notLiftedYet ){
+    
+    activationButtonState = digitalRead(activationPin);
+  
+    
+    if( ( secondsLeft < secondsLeftForLiftingUp || activationButtonState) && !bombActivated){// !liftedUp && notLiftedYet ){
       movingUp = true;
       notLiftedYet = false;
       bombActivated = true;
