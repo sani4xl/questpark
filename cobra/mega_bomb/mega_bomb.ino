@@ -120,9 +120,12 @@ void setup()
   
   Serial.begin(9600);
   
-   pinMode(explodePin, OUTPUT); 
+   pinMode(explodePin, OUTPUT);
+   digitalWrite(explodePin, HIGH);
+   
    pinMode(doorPin, OUTPUT); 
    digitalWrite(doorPin, HIGH);
+   
    pinMode(activationPin, INPUT);
    //explodeServo.attach(explodeServoPin);
    //explodeServo.write(90);
@@ -325,7 +328,7 @@ void explode(){
   //digitalWrite(ssPin, LOW);  
   isLost = true;
     
-  digitalWrite(explodePin, HIGH); 
+  digitalWrite(explodePin, LOW); 
   
   digitalWrite(doorPin, HIGH); 
   //explodeServo.attach(explodeServoPin);
@@ -333,7 +336,7 @@ void explode(){
   // let smoke go out for 3 sec
   movingUp = false;
   delay(3000);
-  digitalWrite(explodePin, LOW); 
+  digitalWrite(explodePin, HIGH); 
 }
 
 void shutDownAnturage(){
