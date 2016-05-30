@@ -234,6 +234,8 @@ void startGame(){
   counting = true;
   gameAcitvated = true;
   
+  shutDownAnturage();
+  
   
   
   wireCutIndex = 0 ;
