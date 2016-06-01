@@ -5,6 +5,7 @@
 int explodePin = 43;
 int doorPin = 41;
 int activationPin = 39;
+int lightPin = 37;
 int activationButtonState = 0;
 
 // anturage motors
@@ -127,6 +128,9 @@ void setup()
    digitalWrite(doorPin, HIGH);
    
    pinMode(activationPin, INPUT);
+   
+   pinMode(lightPin, OUTPUT);
+   digitalWrite(lightPin, HIGH);
    //explodeServo.attach(explodeServoPin);
    //explodeServo.write(90);
    //delay(1000);
@@ -399,10 +403,12 @@ void lifting(){
      //Serial.print("NO FORMAT");  
      //delay(100);
      liftedUp = false;
+     digitalWrite(lightPin, HIGH);
   } 
   else{
     liftedUp = true;
-    //Serial.println("up reached");  
+    Serial.println("up reached");  
+    digitalWrite(lightPin, LOW);
   }
   
   if(digitalRead(buttonStrartPin)){
