@@ -98,24 +98,26 @@ void loop() {
   if(key){
     
     if(key == password[position]){
-      //position ++;
-      guessed_digit++;
+      position ++;
+      //guessed_digit++;
     }
     
-    position ++;
-    /*
+    //position ++;
+    
     else if(key == password[0]){
-      //position = 1;
+      position = 1;
     }
     else{
-      //position = 0;
-    }*/
+      position = 0;
+    }
+    
     Serial.print(position);
     Serial.print(" " );
     Serial.println(guessed_digit);
     
     
     if(position >= passwordLen){
+      /*
       if(guessed_digit == passwordLen){ // valid password
         playOpenSound();
         openServo();
@@ -124,6 +126,9 @@ void loop() {
       else{
         playInvalidSound();
       }
+      */
+      playOpenSound();
+      openServo();
       
       position = 0;
       guessed_digit = 0;

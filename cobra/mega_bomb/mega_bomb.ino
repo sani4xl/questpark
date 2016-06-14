@@ -8,6 +8,8 @@ int activationPin = 39;
 int lightPin = 37;
 int activationButtonState = 0;
 
+int explosionTime = 5000;
+
 // anturage motors
 int liqMotorA = 9;
 int liqMotorB = 10;
@@ -57,7 +59,7 @@ int stopperDownState = false;
 int stopperUpState = false;
 
 
-int secondsLeftForLiftingUp = 30;// 60 * 4; // 4 minute
+int secondsLeftForLiftingUp = 60 * 5;//30;
 
 // bomb stuff
 //const int buttonPin = 2;    // the number of the pushbutton pin
@@ -72,8 +74,8 @@ const int ssPin = 38;
 
 // MEGA SDI pin = 51
 // mege sck pin = 52
-int countdownOptions[] = {1, 5, 15, 60, 45}; //Possible values to count down from
-int countdownSetting = 0; 
+int countdownOptions[] = {1, 5, 15, 60, 45, 100}; //Possible values to count down from
+int countdownSetting = 3; 
 
 /*int cablePin[] = {4, 5, 6, 7};
 int defuseOptions[2][4] = {{4, 7, 5, 6},
@@ -85,7 +87,13 @@ const int wire2Pin = 5;
 const int wire3Pin = 6;
 const int wire4Pin = 7;
 
-int defuseOptions[2][4] = {{wire1Pin, wire2Pin, wire3Pin, wire4Pin},
+// WIRE 1 - BLUE   - 4
+// WIRE 2 - WHITE  - 5
+// WIRE 3 - GREEN  - 6
+// WIRE 4 - ORANGE - 7
+// WHITE -> ORANGE -> BLUE -> GREEN
+
+int defuseOptions[2][4] = {{wire2Pin, wire4Pin, wire1Pin, wire3Pin},
                            {0, 0, 0, 0}};
 long subDefuseTime = 0;
 int isBombDefused = 0;
@@ -97,7 +105,7 @@ boolean isWin = false;
 boolean isLost = false;
 boolean exploded = false;
 int countDef = 0;
-int wrongWireExtraTime = 20;
+int wrongWireExtraTime = 1;// 20 ; // in minutes
 
 /* Values to prevent the button from bouncing */
 int buttonState;             // the current reading from the input pin
@@ -341,7 +349,7 @@ void explode(){
   //explodeServo.write(0);
   // let smoke go out for 3 sec
   movingUp = false;
-  delay(3000);
+  delay(explosionTime);
   digitalWrite(explodePin, HIGH); 
 }
 
@@ -406,9 +414,13 @@ void lifting(){
      digitalWrite(lightPin, HIGH);
   } 
   else{
+    if(!liftedUp){
+      clearDisplaySPI();
+    }
     liftedUp = true;
     Serial.println("up reached");  
     digitalWrite(lightPin, LOW);
+    
   }
   
   if(digitalRead(buttonStrartPin)){
@@ -529,7 +541,7 @@ void count() {
     }
     currentTimeValue += (String)secondsDisplay;
     
-    Serial.print(secondsLeft);
+    //Serial.print(secondsLeft);
     //Serial.print( " ");
     //Serial.println(currentTimeValue);
     //Вывод на дисплей
@@ -583,7 +595,7 @@ void timerRunDown(){
   //
 void displayNumber(String line){
    
-   Serial.println(line); 
+   //Serial.println(line); 
    counter = line.toInt();
    sprintf(tempString, "%4d", counter);
    String timeStringToDispay = (String)tempString;
