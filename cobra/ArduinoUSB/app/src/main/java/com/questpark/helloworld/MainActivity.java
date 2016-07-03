@@ -183,8 +183,10 @@ public class MainActivity extends AppCompatActivity {
                 //data.concat("/n");
                 //System.out.println(data);
                 //mytext.append(data);
+                tvAppend(mytext, "new string:\n");
                 tvAppend(mytext, data);
-                if(!truthIsPlaying){
+                //tvAppend(mytext, String.valueOf (data.toLowerCase().indexOf("parol")) );
+                if(!truthIsPlaying && data.toLowerCase().indexOf("@") >= 0 ){
                     truthIsPlaying = true;
                     playMain();
                 }
@@ -233,12 +235,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCompletion(MediaPlayer mp) {
                 stopMusic();
-                /*
+
                 currentTrack++;
                 if(currentTrack >= tracks.size() ){
                     currentTrack = 0;
-                }*/
-                currentTrack = new Random().nextInt(tracks.size());
+                }
+                //currentTrack = currentTrack + 1;
+                //if(currentTrack)
+                //new Random().nextInt(tracks.size());
 
                 System.out.println(currentTrack);
 
@@ -275,7 +279,7 @@ public class MainActivity extends AppCompatActivity {
                 truthIsPlaying = false;
                 stopMusic();
 
-
+                /*
                 playTimer = new CountDownTimer(60000, 1000) {
                     public void onFinish() {
                         // When timer is finished
@@ -288,6 +292,7 @@ public class MainActivity extends AppCompatActivity {
                         // millisUntilFinished    The amount of time until finished.
                     }
                 }.start();
+                */
             }
         });
         mediaPlayer.start();

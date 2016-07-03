@@ -54,6 +54,9 @@ int movingUp = false;
 int liftedUp = false;
 int notLiftedYet = true;
 int bombActivated = false;
+int onUpPreActivated = false;
+int onUpActivated = false;
+int preUpActivatedSeconds = 0 ;
 
 int stopperDownState = false;
 int stopperUpState = false;
@@ -100,12 +103,12 @@ int isBombDefused = 0;
 int wireCutIndex = 0 ;                           
 
 boolean isGoodDef = false;
-boolean canStart = false;
+boolean canStart = true;
 boolean isWin = false;
 boolean isLost = false;
 boolean exploded = false;
 int countDef = 0;
-int wrongWireExtraTime = 1;// 20 ; // in minutes
+int wrongWireExtraTime = 15;// 20 ; // in minutes
 
 /* Values to prevent the button from bouncing */
 int buttonState;             // the current reading from the input pin
@@ -186,7 +189,7 @@ void initAnturageMotors(){
   //pinMode(in4, OUTPUT);
   //analogWrite(enA, 30);
   analogWrite(liqMotorEn, 130);
-  analogWrite(cdMotorEn, 45);
+  analogWrite(cdMotorEn, 50);
 }
 
 void startGame(){
@@ -235,9 +238,13 @@ void startGame(){
   defuseOptions[1][1] = 0;
   defuseOptions[1][2] = 0;
   defuseOptions[1][3] = 0;
+  liftedUp = false;
   
   notLiftedYet = false;
   bombActivated = false;
+  onUpActivated = false;
+  preUpActivatedSeconds = 0;
+  onUpPreActivated = false;
   
   subDefuseTime = 0;
   newDefuseTime = 0;
@@ -289,6 +296,10 @@ void initCable(){
 
 
 void checkWires(){
+  if(!onUpActivated){
+    return;
+  }
+  
   for(int i  = 0; i < 4; i++){
     int isWireOn = digitalRead(defuseOptions[0][i]);
     if(defuseOptions[1][i]){
@@ -360,6 +371,15 @@ void shutDownAnturage(){
   digitalWrite (ledPin1, LOW); 
 }
 
+void stopGame(){
+  gameAcitvated = false;
+  isLost = false;
+  isWin = false;
+  preUpActivatedSeconds = 0;
+  digitalWrite(doorPin, HIGH); 
+  shutDownAnturage();
+}
+
 void loop()
 {
   
@@ -415,10 +435,15 @@ void lifting(){
   } 
   else{
     if(!liftedUp){
-      clearDisplaySPI();
+      //clearDisplaySPI();
+      tm1637.clearDisplay();
+      tm1637.point(false);
     }
     liftedUp = true;
-    Serial.println("up reached");  
+    if(!onUpPreActivated){
+      onUpPreActivated = true;
+    }
+    //Serial.println("up reached");  
     digitalWrite(lightPin, LOW);
     
   }
@@ -441,6 +466,7 @@ void lifting(){
       movingDown = true;
     }
     
+    stopGame();
     canStart = true;
     movingUp = false;
     delay(250);
@@ -493,6 +519,7 @@ void lifting(){
   } 
 }
 
+
 void count() {
   
   //Serial.print(counting);
@@ -500,6 +527,16 @@ void count() {
   if (counting){
     unsigned long now = millis();
     int secondsPassed = (now-lastStartTime)/1000;
+    if(onUpPreActivated && preUpActivatedSeconds <= 0){
+       preUpActivatedSeconds = secondsPassed;
+       //onUpPreActivated = true;
+       
+    }
+    
+    if(!onUpActivated && preUpActivatedSeconds >= 0 && (secondsPassed - preUpActivatedSeconds) > 10 ){
+      onUpActivated = true;
+    }
+    
     secondsPassed += subDefuseTime * 60;
     
     
@@ -509,11 +546,16 @@ void count() {
     
     int secondsLeft = lastSecond - secondsPassed;
     
+    if(secondsLeft % 60 == 0){
+      clearDisplaySPI();
+    }
+    
     activationButtonState = digitalRead(activationPin);
   
     
     if( ( secondsLeft < secondsLeftForLiftingUp || activationButtonState) && !bombActivated){// !liftedUp && notLiftedYet ){
       movingUp = true;
+      //onUpActivated = false;
       notLiftedYet = false;
       bombActivated = true;
     }
@@ -601,24 +643,27 @@ void displayNumber(String line){
    String timeStringToDispay = (String)tempString;
    
    // outputting to bomb screen
-   s7sSendStringSPI(timeStringToDispay);   
-   //beep(50);
    dec(counter);
    
-   
+   if(liftedUp){
+     s7sSendStringSPI(timeStringToDispay);   
+   }
+   else{
+   //beep(50);
    // outputing to main screen
    //*
-   timeStringToDispay.toCharArray(mainScreenBuffer, 5);
-   for(int i = 0; i<4; i++){
-    mainTimeDisp[i]= mainScreenBuffer[i] - 48;
-  }
+     timeStringToDispay.toCharArray(mainScreenBuffer, 5);
+     for(int i = 0; i<4; i++){
+       mainTimeDisp[i]= mainScreenBuffer[i] - 48;
+     }
   
-  tm1637.display(mainTimeDisp); 
+     tm1637.display(mainTimeDisp); 
+   }
   
   //*/
    
   // leds 
-   if(bombActivated){
+   if(bombActivated && onUpActivated){
      led(counter);
      anturageMotorsAction();
    }   
@@ -628,12 +673,20 @@ void displayNumber(String line){
 void dec(int isEvenNumber){
    if (isEvenNumber % 2 == 0) { 
      
-     setDecimalsSPI(0b00010000);
-     tm1637.point(true);
+     if(liftedUp){
+       setDecimalsSPI(0b00010000);
+     }
+     else{
+       tm1637.point(true);
+     }
  
    } else{ 
-     setDecimalsSPI(0b00000000);
-     tm1637.point(false);
+     if(liftedUp){
+       setDecimalsSPI(0b00000000);
+     }
+     else{
+       tm1637.point(false);
+     }
    }
 }
 
@@ -703,6 +756,7 @@ void anturageMotorsAction()
     return;
   }
   
+  
   //liqMotorA
   unsigned long now = millis() / 1000;
   long diff = now - liqMotorLastMills;
@@ -736,7 +790,7 @@ void anturageMotorsAction()
 } 
 
 void activateCdMotor(){
-  unsigned long now = millis() / 500;
+  unsigned long now = millis() / 200;
   
   long cdDiff = now - cdMotorLastMills;
   if(  cdDiff > 1){

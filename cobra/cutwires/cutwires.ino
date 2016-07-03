@@ -1,9 +1,9 @@
 const int buttonPin = 2; 
 
-const int wire1Pin = 8;
-const int wire2Pin = 9;
-const int wire3Pin = 10;
-const int wire4Pin = 11;
+const int wire1Pin = 4;
+const int wire2Pin = 5;
+const int wire3Pin = 6;
+const int wire4Pin = 7;
 
 int defuseOptions[2][4] = {{wire1Pin, wire2Pin, wire3Pin, wire4Pin},
                            {0, 0, 0, 0}}; 
@@ -69,17 +69,18 @@ void checkWires(){
 }
 
 void loop() {
+  //checkWires();
   // read the state of the pushbutton value:
-  //wire1State = digitalRead(wire1Pin);//  digitalRead(buttonPin);
-  //wire2State = digitalRead(wire2Pin);//  digitalRead(buttonPin);
-  //wire3State = digitalRead(wire3Pin);//  digitalRead(buttonPin);
-  //wire4State = digitalRead(wire4Pin);//  digitalRead(buttonPin);
+  wire1State = digitalRead(wire1Pin);//  digitalRead(buttonPin);
+  wire2State = digitalRead(wire2Pin);//  digitalRead(buttonPin);
+  wire3State = digitalRead(wire3Pin);//  digitalRead(buttonPin);
+  wire4State = digitalRead(wire4Pin);//  digitalRead(buttonPin);
   
-  checkWires();
+  
   // check if the pushbutton is pressed.
   // if it is, the buttonState is HIGH:
   //Serial.println(wire1State);
-/*  
+  //*  
   if (wire1State != HIGH) {
     Serial.println("WIRE 1 OFF");  
   }
@@ -96,6 +97,6 @@ void loop() {
     Serial.println("WIRE 4 OFF");  
   }
   Serial.println("========");
-  */
+  //*/
   delay(200);
 }
