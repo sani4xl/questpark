@@ -21,8 +21,8 @@ Servo myservo;
 int servoPos = 0;
 
 int password[] = { leftDir , downDir , leftDir , topDir, rightDir,
- downDir, rightDir, topDir, leftDir };
-int passwordLen = 9;
+ downDir, rightDir, topDir, leftDir, topDir };
+int passwordLen = 10;
 int key;
 int position = 0;
 int guessed_digit = 0;
