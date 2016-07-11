@@ -190,7 +190,7 @@ void initAnturageMotors(){
   //pinMode(in4, OUTPUT);
   //analogWrite(enA, 30);
   analogWrite(liqMotorEn, 130);
-  analogWrite(cdMotorEn, 50);
+  analogWrite(cdMotorEn, 60);
 }
 
 void startGame(){
@@ -308,7 +308,9 @@ void checkWires(){
   }
   
   
-  
+  int cuts_per_session = 0;
+  boolean wrongCut = false;
+  boolean wireHasBeenCut = false;
   for(int i  = 0; i < 4; i++){
     int isWireOn = digitalRead(defuseOptions[0][i]);
     if(defuseOptions[1][i]){
@@ -325,11 +327,14 @@ void checkWires(){
         }
         else{
           Serial.println (" WRONG!!!");
-          subDefuseTime += wrongWireExtraTime;
-          timerRunDown();
+          //subDefuseTime += wrongWireExtraTime;
+          //timerRunDown();
+          wrongCut = true;
         }
+        cuts_per_session++;
         delay(100);
-        return;
+        wireHasBeenCut = true;
+        //break;
       }
       else{
         if(i == wireCutIndex){
@@ -338,6 +343,28 @@ void checkWires(){
       }
     }
   }
+  
+  if(cuts_per_session >= 2){
+    Serial.print(cuts_per_session);
+    Serial.println (" cuts per session!!!");
+    for(int k = 0; k < cuts_per_session; k++){
+      subDefuseTime += wrongWireExtraTime;
+    }
+    timerRunDown();
+  }
+  
+  if(wrongCut){
+     subDefuseTime += wrongWireExtraTime;
+     timerRunDown();
+     //return;
+  }  
+  
+  if(wireHasBeenCut){
+    return;
+  }
+           
+  
+  
   
   if(wireCutIndex >= 4){
     isBombDefused = true; 
@@ -372,6 +399,14 @@ void explode(){
     
   //digitalWrite(ssPin, LOW);  
   isLost = true;
+  
+  // sound
+  int beepDelay = 150;
+  int beepsCount = 20;
+  for(int i = 0 ; i < beepsCount; i++){
+    
+    beep(beepDelay - i * 7);
+  }
     
   digitalWrite(explodePin, LOW); 
   
@@ -467,7 +502,7 @@ void lifting(){
     if(!onUpPreActivated){
       onUpPreActivated = true;
     }
-    Serial.println("up reached");  
+    //Serial.println("up reached");  
     digitalWrite(lightPin, LOW);
     
   }
@@ -651,6 +686,10 @@ void timerRunDown(){
   int var = 0;
   int cnt = 0;  
   
+  analogWrite (speakerPin, 0);
+  //delay(delayms); //ждем 100 Мс
+  
+  
   while(var < 1000){
     cnt = countdownTime - var;
     displayNumber((String)cnt);
@@ -660,6 +699,8 @@ void timerRunDown(){
     }
     var++;
   }
+  
+  analogWrite (speakerPin, 255);
 }
   //
 void displayNumber(String line){
@@ -718,9 +759,13 @@ void dec(int isEvenNumber){
 }
 
 void led(int isEvenNumber){
-  if (isEvenNumber % 2 == 0) { digitalWrite (ledPin1, HIGH);digitalWrite (ledPin2, LOW);  
+  if (isEvenNumber % 2 == 0) { 
+     digitalWrite (ledPin1, HIGH);
+     digitalWrite (ledPin2, LOW);  
   //tone (speakerPin, 777);
-  } else{ digitalWrite (ledPin1, LOW);digitalWrite (ledPin2, HIGH);
+  } else{ 
+    digitalWrite (ledPin1, LOW);
+    digitalWrite (ledPin2, HIGH);
   //digitalWrite(speakerPin, LOW);
    //noTone(speakerPin); 
  }
