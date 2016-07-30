@@ -11,6 +11,7 @@ import com.felhr.usbserial.UsbSerialInterface;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import android.app.Activity;
@@ -37,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     UsbDeviceConnection connection;
     EditText mytext;
     boolean truthIsPlaying;
+    boolean repeatAfterTruth;
     //int [] tracks;
     ArrayList<Integer> tracks;
     int currentTrack = 0;
@@ -48,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         initializeViews();
         truthIsPlaying = false;
+        repeatAfterTruth = true;
         mytext = (EditText) findViewById(R.id.mytext);
         tracks = new ArrayList<Integer>();//new int[3];
         tracks.add(0, R.raw.anekdot);
@@ -81,6 +84,8 @@ public class MainActivity extends AppCompatActivity {
         tracks.add(28, R.raw.trupi);
         tracks.add(29, R.raw.utug);
         tracks.add(30, R.raw.zhdet);
+
+        Collections.shuffle(tracks);
 
 
         usbManager = (UsbManager) getSystemService(this.USB_SERVICE);
@@ -279,20 +284,20 @@ public class MainActivity extends AppCompatActivity {
                 truthIsPlaying = false;
                 stopMusic();
 
-                /*
-                playTimer = new CountDownTimer(60000, 1000) {
-                    public void onFinish() {
-                        // When timer is finished
-                        // Execute your code here
-                        System.out.println("delay timer finished");
-                        playMusic();
-                    }
+                if(repeatAfterTruth) {
+                    playTimer = new CountDownTimer(60000, 1000) {
+                        public void onFinish() {
+                            // When timer is finished
+                            // Execute your code here
+                            System.out.println("delay timer finished");
+                            playMusic();
+                        }
 
-                    public void onTick(long millisUntilFinished) {
-                        // millisUntilFinished    The amount of time until finished.
-                    }
-                }.start();
-                */
+                        public void onTick(long millisUntilFinished) {
+                            // millisUntilFinished    The amount of time until finished.
+                        }
+                    }.start();
+                }
             }
         });
         mediaPlayer.start();
@@ -301,6 +306,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void stop(View view) {
         stopMusic();
+    }
+
+    public void switchRepeat(View view) {
+        repeatAfterTruth = !repeatAfterTruth;
     }
 
     protected void stopMusic(){

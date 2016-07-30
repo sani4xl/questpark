@@ -1,3 +1,5 @@
+#include <Bounce2.h>
+
 #include <SPI.h> // Include the Arduino SPI library
 //#include <Servo.h>
 #include "TM1637.h"
@@ -8,7 +10,7 @@ int activationPin = 39;
 int lightPin = 37;
 int activationButtonState = 0;
 
-int explosionTime = 5000;
+int explosionTime = 7000;
 
 // anturage motors
 int liqMotorA = 9;
@@ -90,14 +92,23 @@ const int wire2Pin = 5;
 const int wire3Pin = 6;
 const int wire4Pin = 7;
 
+Bounce wireBounce1 = Bounce(); 
+Bounce wireBounce2 = Bounce(); 
+Bounce wireBounce3 = Bounce(); 
+Bounce wireBounce4 = Bounce(); 
+
 // WIRE 1 - BLUE   - 4
 // WIRE 2 - WHITE  - 5
 // WIRE 3 - GREEN  - 6
 // WIRE 4 - ORANGE - 7
 // WHITE -> ORANGE -> BLUE -> GREEN
 
-int defuseOptions[2][4] = {{wire2Pin, wire4Pin, wire1Pin, wire3Pin},
+/*int defuseOptions[2][4] = {{wire2Pin, wire4Pin, wire1Pin, wire3Pin},
                            {0, 0, 0, 0}};
+                           */
+int defuseOptions[2][4] = {{2, 4, 1, 3},
+                           {0, 0, 0, 0}};
+                                                      
 long subDefuseTime = 0;
 int isBombDefused = 0;
 int wireCutIndex = 0 ;                           
@@ -297,8 +308,49 @@ void initCable(){
   pinMode(wire2Pin, INPUT);
   pinMode(wire3Pin, INPUT);
   pinMode(wire4Pin, INPUT);
+
+  wireBounce1.attach(wire1Pin);
+  wireBounce1.interval(5); // interval in ms
+  
+  wireBounce2.attach(wire2Pin);
+  wireBounce2.interval(5); // interval in ms
+  
+  wireBounce3.attach(wire3Pin);
+  wireBounce3.interval(5); // interval in ms
+  
+  wireBounce4.attach(wire4Pin);
+  wireBounce4.interval(5); // interval in ms
 }
 
+Bounce getBounceByIndex(int index){
+
+    switch(index){
+      case 1:
+      return wireBounce1;
+      break;
+
+      case 2:
+      return wireBounce2;
+      break;
+
+      case 3:
+      return wireBounce3;
+      break;
+
+      case 4:
+      return wireBounce4;
+      break;
+    }
+  
+
+}
+
+void updateBounces(){
+  wireBounce1.update();
+  wireBounce2.update();
+  wireBounce3.update();
+  wireBounce4.update();
+}
 
 void checkWires(){
   
@@ -306,13 +358,21 @@ void checkWires(){
   if(!onUpActivated){
     return;
   }
+
+  updateBounces();
   
   
   int cuts_per_session = 0;
   boolean wrongCut = false;
   boolean wireHasBeenCut = false;
   for(int i  = 0; i < 4; i++){
-    int isWireOn = digitalRead(defuseOptions[0][i]);
+    Bounce tmpBounce = getBounceByIndex(defuseOptions[0][i]);
+    //Serial.println(tmpBounce);
+    //tmpBounce.update();
+    int isWireOn = tmpBounce.read();
+    //Serial.print(isWireOn);
+    //Serial.println(defuseOptions[0][i]);
+    //int isWireOn = digitalRead(defuseOptions[0][i]);
     if(defuseOptions[1][i]){
       isWireOn = false;
     }
