@@ -36,7 +36,12 @@ class Flasher
     {
       digitalWrite(ledPin, LOW);
     }
-
+    
+    void UpdateON()
+    {
+      digitalWrite(ledPin, HIGH);
+    }
+    
     void Update()
     {
 
@@ -188,6 +193,8 @@ const int ssPin2 = 49;
 String strOne;
 
 //------------------------------------- Box-Step1
+int ledRest = 8;
+int btnRest = 7;
 boolean isBoxOpen = false;
 int btnBoxPress = 77;
 boolean isWeaponStart = false;
@@ -195,14 +202,19 @@ boolean isIrStart = false;
 boolean isRest = false;
 boolean isStart = false;
 
-int relayStartBtn = 24;
+int MagRelay = 9;
+int relayStartBtn = 30;  //24
 boolean isRelayStart = false;
 boolean isRelayRestart = false;
 boolean isR1 = false;
 boolean isR2 = false;
+boolean isKeyBox = false;
 
 int count =0;
 long previousMillis = 0; //Время последнего нажатия кнопки
+
+int relayReserveBtn = 39;                                    // ---- > RESERVE
+
 // ------------------------------------ RELAY
 int relay = 26;                  //   ???
 int relay_2 = 28;                //   ???
@@ -221,6 +233,13 @@ int x = 0;
 boolean isTime = false;
 boolean isBtnUnk = false;
 unsigned long sc_start=0;
+
+Bounce debouncer1 = Bounce(); 
+
+Bounce debouncer2 = Bounce(); 
+
+Bounce debouncer3 = Bounce(); 
+
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 void setup() {
   //if (_initialized) return;
@@ -228,7 +247,10 @@ void setup() {
   Serial.begin(9600);
  // Wire.begin(8);                // join i2c bus with address #8
  // Wire.onReceive(receiveEvent); // register event
-    // Box - #1
+  pinMode(MagRelay, OUTPUT);
+  digitalWrite(MagRelay, HIGH);
+  
+  // Box - #1
   pinMode(relay, OUTPUT);
   digitalWrite(relay, HIGH);
 
@@ -238,6 +260,13 @@ void setup() {
   pinMode(relay_sound, OUTPUT);
   digitalWrite(relay_sound, HIGH);
 
+  pinMode(ledRest,OUTPUT);
+  digitalWrite(ledRest, LOW);
+   
+  pinMode(btnRest,INPUT);
+  debouncer3.attach(btnRest);
+  debouncer3.interval(5); // interval in ms
+  
   rcv_count = 4;
   all_rcv = (IRrecv **)malloc(rcv_count*sizeof(int));
   
@@ -251,12 +280,16 @@ void setup() {
   }
   
   //_initialized = true;
-  pinMode(relayStartBtn, INPUT_PULLUP);
-  debouncer.attach(relayStartBtn);
-  debouncer.interval(5); // interval in ms
+  pinMode(relayStartBtn, INPUT);
+  debouncer1.attach(relayStartBtn);
+  debouncer1.interval(5); // interval in ms
   
-  keyBox.Attach(45);
-  keyBox.Update(1);
+  // ---
+  pinMode(relayReserveBtn, INPUT_PULLUP);
+  debouncer2.attach(relayReserveBtn);
+  debouncer2.interval(5); // interval in ms
+  
+  
 
   // -------- SPI initialization
   pinMode(ssPin, OUTPUT);  // Set the SS pin as an output
@@ -264,7 +297,10 @@ void setup() {
 
   pinMode(ssPin2, OUTPUT);  // Set the SS pin as an output
   //digitalWrite(ssPin2, LOW);  // Set the SS pin HIGH
-
+  
+  keyBox.Attach(45);
+  keyBox.Update(1);
+  keyBox.Detach();
   SPI.begin();  // Begin SPI hardware
   SPI.setClockDivider(SPI_CLOCK_DIV64);  // Slow down SPI clock
   // --------
@@ -287,26 +323,28 @@ void receiveEvent(int howMany) {
   }
   x = Wire.read();    // receive byte as an integer
   Serial.println(x);         // print the integer
+  
 }
 
 
 void loop() {
 
-  
-    //weapon_1.Update(1);
-
-  //  weapon_1.Update(2);
+//    weapon_1.Update(1);
+//    weapon_1.Update(2);
   
   //****************************************
   //*   Открываем Box: срабативают вверхние замки на удержание 5 сек.
   //*   через 1 сек. срабативаю маникены на открытия
   //****************************************
-  delay(200);
+  //delay(200);
   // Update the Bounce instance :
-  debouncer.update();
+  
+  debouncer1.update();
+  debouncer2.update();
+  debouncer3.update();
 
   // Get the updated value :
-  int value = debouncer.read();
+  int value = debouncer1.read();
 
   // Turn on or off the LED as determined by the state :
   if ( value == HIGH ) {
@@ -329,24 +367,27 @@ void loop() {
         //count = 0;
        
      }
-     
-     //(millis() - previousMillis > 700)
-     if (( isWIN == true )&&(isRest == false)) {
-       //Запоминаем время первого срабатывания
-       previousMillis = millis();
-       Serial.println(isRelayRestart);
-       Serial.println("----------------------------------------------------------    RESTART");
-         isBoxOpen = false;
-         isTRelay = false;
-         isWeaponStart = false;
-         init2();
-            // ---
-         isRelayRestart = false;
-         //count = 0;
-         isRelayStart = false; 
-         isWIN = false;
-         isRest = true;   
-     }
+  
+//     // -----------------------------------------------
+//     //(millis() - previousMillis > 700)
+//     if (( isWIN == true )&&(isStart == true)) {
+//       //Запоминаем время первого срабатывания
+//       previousMillis = millis();
+//       Serial.println(isRelayRestart);
+//       Serial.println("----------------------------------------------------------    RESTART");
+//         isBoxOpen = false;
+//         isTRelay = false;
+//         isWeaponStart = false;
+//         init2();
+//            // ---
+//         isRelayRestart = false;
+//         //count = 0;
+//         isRelayStart = false; 
+//         isWIN = false;
+//         isStart = false;   
+//     } // ---------------------------------------------
+  
+  
    // count++;
   } 
   Serial.print(" -- value: ");
@@ -373,7 +414,64 @@ void loop() {
   //  isRelayStart --> TRUE isBoxOpen -- > FALSE
   
   //if ((btnBoxPress == x) && (!isBoxOpen)) {
- 
+     
+    // RESERVE
+    int value2 = debouncer2.read();
+    
+    if ((value2 == HIGH)) {   
+    //if (digitalRead(relayReserveBtn) == HIGH){
+      // включаем    
+      Serial.println("RESERVE");
+      digitalWrite(relay, LOW);
+      delay(300);
+    
+      digitalWrite(relay_2, LOW);
+      digitalWrite(relay, HIGH);  // Отключить Реле
+      delay(300);
+    
+      digitalWrite(relay_2, HIGH); // Отключить Реле
+      
+      if (!isStart) {
+         isRelayStart = true;
+         isStart = true;
+      
+      }
+    }
+
+    
+    // END RESERVE
+    
+    // ----
+  int value3 = debouncer3.read();  
+  //if ((value3 == HIGH)&&(isRest)) {   
+  
+  if ((value3 == HIGH)) {   
+  
+  //  if (digitalRead(btnRest) == HIGH){
+   Serial.print("R-Btn");
+   digitalWrite(ledRest, HIGH);
+   delay(60);
+    
+   //
+   Serial.println("----------------------------------------------------------    RESTART");
+   isBoxOpen = false;
+   isTRelay = false;
+   isWeaponStart = false;
+   isIrStart = false;
+   
+   init2();
+   // ---
+   isWIN = false;
+   isStart = false;    
+
+  // isRest = false;
+   //  
+   // digitalWrite(ledRest, LOW);
+    
+  }// END REST
+  
+  
+    // ----
  
     if ((isRelayStart)&& (!isBoxOpen)) { 
     if (!isTRelay) {
@@ -381,12 +479,15 @@ void loop() {
       isTRelay = true;
       Serial.print(sc_start_relay);
     }
-
+    //
+    
+    digitalWrite(MagRelay, LOW);
+    
     digitalWrite(relay, LOW);
     Serial.println("Relay1 - ONN ");  // Включить Реле
     //Serial.println(millis() - sc_start_relay);
     
-    if ((millis() - sc_start_relay > 300) && (!isR1)) {
+    if ((millis() - sc_start_relay > 600) && (!isR1)) {
       digitalWrite(relay_2, LOW);
       digitalWrite(relay, HIGH);  // Отключить Реле
       Serial.println("Relay_2 - ONN ");
@@ -395,7 +496,7 @@ void loop() {
       isR2 = true;
     }
     
-    if ((millis() - sc_start_relay > 300)&&(isR2)) {
+    if ((millis() - sc_start_relay > 600)&&(isR2)) {
       Serial.println("Relay_2    -- - - - - OFF ");
       digitalWrite(relay_2, HIGH); // Отключить Реле
       isBoxOpen = true;
@@ -405,14 +506,14 @@ void loop() {
       sc_start_weapon = millis();
       sc_start_ir = millis();
     }
-
+    
   } //END -IF BoxBtn
   
   // ---------------------------------------------  WEAPON ------------------------------------------------------------
   // isWeaponStart   -- > TRUE
   
   if (isWeaponStart) {
-    if (millis() - sc_start_weapon > 3000) {
+    if (millis() - sc_start_weapon > 6000) {
     
       Serial.print("isWeaponStart : ");
       Serial.println(isWeaponStart);
@@ -427,6 +528,9 @@ void loop() {
       isIrStart = true;
     
       sc_start = millis();
+      // CLOSE     
+      digitalWrite(MagRelay, HIGH);
+  
     }
   }// isWeaponStart
   
@@ -438,6 +542,7 @@ void loop() {
 //   isIrStart --> TRUE
   
   if (isIrStart) {
+    Serial.print("+++++++++++ IrStart +++++++ ");
   if (millis() - sc_start_ir > 2000) {
       
     
@@ -469,7 +574,7 @@ void loop() {
          // 
           ledBot1.Update();
           
-          randNumber = random(5,15);
+          randNumber = random(3,7);
           //clearDisplaySPI(); 
           shotBot(randNumber, firstBot);
 
@@ -491,7 +596,7 @@ void loop() {
           
           ledBot2.Update();
           
-          randNumber = random(5,15);
+          randNumber = random(4,8);
           //clearDisplaySPI();
           shotBot(randNumber, secondBot);
           
@@ -514,11 +619,13 @@ void loop() {
     if (!isDied[firstBot]){
    //   Serial.print("isD#1");
       weapon_1.Update(2);
+     // weapon_1.Detach();
     }
 
   if (!isDied[secondBot]){
      // Serial.print("isD#2");
       weapon_2.Update(2);
+      //weapon_2.Detach();
     }
 
   } // --- sc_start_ir
@@ -532,13 +639,23 @@ void loop() {
     //isStartRest = false;
     isWIN = true;
     isIrStart = false;
+  //  isRest = true;
+    digitalWrite(ledRest, LOW);
+    keyBox.Attach(45);
     keyBox.Update(3);
     sc_start_key = millis();
+    weapon_1.Detach();
+    weapon_2.Detach();
+    
+    isKeyBox = true;
    }
   
-  if ((millis() - sc_start_key > 5000) && (millis() - sc_start_key < 10000)) {
+  if (((millis() - sc_start_key > 7000) && (millis() - sc_start_key < 10000))&&(isKeyBox)) {
      keyBox.Attach(45);
      keyBox.Update(1);
+     delay(120);
+     keyBox.Detach();
+     isKeyBox = false;
   }
     
   
@@ -658,6 +775,8 @@ void setDecimalsSPI(byte decimals)
 }
 
 void init2() {
+  ledBot1.UpdateON();
+  ledBot2.UpdateON();
   health[firstBot] = 100;
   health[secondBot] = 100;
   
@@ -666,10 +785,18 @@ void init2() {
   
   clearDisplaySPI();
   
+  weapon_1.Attach(43);
+  weapon_2.Attach(41);
+  weapon_1.Update(4);
+  weapon_2.Update(4);
+  
+  
   keyBox.Attach(45);
   keyBox.Update(1);
-
-  
+  delay(120);
+  keyBox.Detach();
+  weapon_1.Detach();
+  weapon_2.Detach();
   s7sSendStringSPI_1((String)health[firstBot] + "--");
   s7sSendStringSPI_2((String)health[secondBot] + "--");
 

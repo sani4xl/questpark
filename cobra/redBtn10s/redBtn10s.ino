@@ -21,9 +21,13 @@ boolean isPress = false;
 boolean isFinishSound = false;
 boolean isTime = false; 
 boolean isRelayRestart = false; 
+boolean isFinishLed = false; 
+
 unsigned long sc_start=0;
 unsigned long soundON=0;
 unsigned long sc_start_relay = 0;
+unsigned long sc_led = 0;
+int countLed = 0;
 
 int ledPanel[] = {5, 6, 7, 8, 9, 10, 11, 12};
 
@@ -58,7 +62,9 @@ void setup() {
     
     pinMode(relayStartPin, OUTPUT);
     digitalWrite(relayStartPin, LOW);
-
+    
+    sc_led = millis();
+    countLed = 0;
 }
 
 void offLights() {
@@ -73,19 +79,34 @@ void onLights() {
    }
 }
 
+
+void circleLights() {
+  Serial.print("L");
+  if ( (millis()- sc_led > 100) ) {
+    if (countLed == 8) { digitalWrite(ledPanel[7], LOW); countLed = 0;}
+    
+    digitalWrite(ledPanel[countLed], HIGH);
+    digitalWrite(ledPanel[countLed - 1], LOW);
+    countLed ++; 
+    sc_led = millis();
+   }    
+}
+
   
 void loop() {
+  
+    
     buttonRestartState = digitalRead(restartBtnPin);
     if ((buttonRestartState == HIGH)&&(isFinishPress == true)) {
       Serial.println("--- RESTART ---");
       digitalWrite(ledPin, HIGH);
       isFinishPress = false;
-      if (isRelayRestart) {
-        digitalWrite(relayStartPin, HIGH);
-        delay(1000);
-        digitalWrite(relayStartPin, LOW);
-      
-      }  
+      isFinishLed = false;
+     // if (isRelayRestart) {
+     //   digitalWrite(relayStartPin, HIGH);
+     //   delay(1000);
+     //   digitalWrite(relayStartPin, LOW);
+     // }  
     }
   
   
@@ -159,7 +180,8 @@ void loop() {
     }
     else {
         Serial.println("- Off -");
-        offLights();
+        if (!isFinishLed){circleLights();} 
+        else {offLights();}
        // digitalWrite(ledPin, LOW);
         sc_start = 0;
         isPress = false;
@@ -185,6 +207,7 @@ void loop() {
         isPress = false;
         isTime = false;
         isFinishPress = true;
+        isFinishLed = true;
         digitalWrite(ledPin, LOW);
     
         Wire.beginTransmission(8);
@@ -216,5 +239,5 @@ void loop() {
         Serial.println("relayStartPin - OFF ");
     }
   
-    delay(20);
+    delay(10);
 }//END SKETCH
