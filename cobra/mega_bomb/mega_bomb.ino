@@ -9,7 +9,7 @@ int doorPin = 41;
 int activationPin = 39;
 int lightPin = 37;
 int activationButtonState = 0;
-
+boolean fewCutPerSession = false;
 int explosionTime = 7000;
 
 // anturage motors
@@ -269,8 +269,6 @@ void startGame(){
   
   shutDownAnturage();
   
-  
-  
   wireCutIndex = 0 ;
   isLost = false;
   
@@ -486,6 +484,7 @@ void shutDownAnturage(){
   stopCdMotor();  
   digitalWrite (ledPin2, LOW);
   digitalWrite (ledPin1, LOW); 
+  digitalWrite(doorPin, HIGH);
 }
 
 void stopGame(){
