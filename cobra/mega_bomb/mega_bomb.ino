@@ -201,7 +201,7 @@ void initAnturageMotors(){
   //pinMode(in4, OUTPUT);
   //analogWrite(enA, 30);
   analogWrite(liqMotorEn, 130);
-  analogWrite(cdMotorEn, 60);
+  analogWrite(cdMotorEn, 70);
 }
 
 void startGame(){

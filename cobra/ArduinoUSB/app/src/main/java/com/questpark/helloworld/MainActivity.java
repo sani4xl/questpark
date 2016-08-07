@@ -229,6 +229,14 @@ public class MainActivity extends AppCompatActivity {
         playMusic();
     }
 
+    public void startGame(View view) {
+        System.out.println("init serial");
+        mytext.append("init serial");
+        initSerial();
+
+        playMusic();
+    }
+
 
 
     public void playMusic(){

@@ -33,7 +33,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/mytext"
-        android:height="150dp"
+        android:height="100dp"
         android:layout_above="@+id/sayBtn"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
@@ -71,5 +71,17 @@
         android:layout_toRightOf="@+id/usbButton"
         android:layout_toEndOf="@+id/usbButton"
         android:onClick="switchRepeat" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="START"
+        android:id="@+id/startButton"
+        android:onClick="startGame"
+        android:layout_below="@+id/stop_btn"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/mytext"
+        android:width="200dp"
+        android:focusable="true" />
 
 </RelativeLayout>
