@@ -49,22 +49,6 @@ class Flasher
       delay(200);
       digitalWrite(ledPin, HIGH);
 
-      //    // выясняем не настал ли момент сменить состояние светодиода
-      //
-      //    unsigned long currentMillis = millis(); // текущее время в миллисекундах
-      //
-      //    if((ledState == HIGH) && (currentMillis - previousMillis >= OnTime))
-      //    {
-      //      ledState = LOW; // выключаем
-      //      previousMillis = currentMillis; // запоминаем момент времени
-      //      digitalWrite(ledPin, ledState); // реализуем новое состояние
-      //    }
-      //    else if ((ledState == LOW) && (currentMillis - previousMillis >= OffTime))
-      //    {
-      //      ledState = HIGH; // выключаем
-      //      previousMillis = currentMillis ; // запоминаем момент времени
-      //      digitalWrite(ledPin, ledState); // реализуем новое состояние
-      //    }
     }
 };
 
@@ -202,8 +186,10 @@ boolean isIrStart = false;
 boolean isRest = false;
 boolean isStart = false;
 
+int roomLightRelay = 10;
 int MagRelay = 9;
 int relayStartBtn = 30;  //24
+boolean isMag = false;
 boolean isRelayStart = false;
 boolean isRelayRestart = false;
 boolean isR1 = false;
@@ -222,6 +208,7 @@ int relay_2 = 28;                //   ???
 int relay_sound = 40;                //   ???
 
 unsigned long sc_start_relay = 0;
+unsigned long sc_start_mag = 0;
 unsigned long sc_start_key = 0;
 unsigned long sc_start_weapon = 0;
 unsigned long sc_start_ir = 0;
@@ -249,6 +236,9 @@ void setup() {
  // Wire.onReceive(receiveEvent); // register event
   pinMode(MagRelay, OUTPUT);
   digitalWrite(MagRelay, HIGH);
+  
+  pinMode(roomLightRelay, OUTPUT);
+  digitalWrite(roomLightRelay, HIGH);
   
   // Box - #1
   pinMode(relay, OUTPUT);
@@ -311,7 +301,8 @@ void setup() {
 //    weapon_1.Attach(43);
 //    weapon_1.Update(1);
 //   weapon_1.Attach(41);
-
+ledBot1.UpdateOFF();
+ledBot2.UpdateOFF();
 }
 
 // function that executes whenever data is received from master
@@ -339,76 +330,21 @@ void loop() {
   //delay(200);
   // Update the Bounce instance :
   
-  debouncer1.update();
-  debouncer2.update();
-  debouncer3.update();
+  debouncer1.update();  // START
+  debouncer2.update();  // RESERVE
+  debouncer3.update();  // RESTART
 
-  // Get the updated value :
+  
   int value = debouncer1.read();
-
-  // Turn on or off the LED as determined by the state :
   if ( value == HIGH ) {
-    
-     Serial.print("previousMillis: ");
-     Serial.println( millis() - previousMillis );
-     //Если от предыдущего нажатия прошло больше 800 миллисекунд
-     Serial.print("#########################################isStartRest: ");
-     //Serial.println(isStartRest);
-     Serial.print("isWIN isWIN isWIN isWIN isWIN isWIN isWIN isWIN: ");
-     Serial.println(isWIN);
-     
-     if ((isWIN == false )&&(isStart == false)) {
-       //Запоминаем время первого срабатывания
+    if ((isWIN == false ) && (isStart == false)) {
+      Serial.println(" ------------------------------------------------------> START ");
        previousMillis = millis();
-       Serial.println(isRelayStart);
-       Serial.println(" ------------------------------------------------------       START");
        isRelayStart = true;
        isStart = true;
-        //count = 0;
-       
+       sc_start_mag = millis();
      }
-  
-//     // -----------------------------------------------
-//     //(millis() - previousMillis > 700)
-//     if (( isWIN == true )&&(isStart == true)) {
-//       //Запоминаем время первого срабатывания
-//       previousMillis = millis();
-//       Serial.println(isRelayRestart);
-//       Serial.println("----------------------------------------------------------    RESTART");
-//         isBoxOpen = false;
-//         isTRelay = false;
-//         isWeaponStart = false;
-//         init2();
-//            // ---
-//         isRelayRestart = false;
-//         //count = 0;
-//         isRelayStart = false; 
-//         isWIN = false;
-//         isStart = false;   
-//     } // ---------------------------------------------
-  
-  
-   // count++;
   } 
-  Serial.print(" -- value: ");
-  Serial.println(value);
-
-//  Serial.print(" -- Buttun One: ");
-//  Serial.println(digitalRead(relayStartBtn));
-
-//  if (digitalRead(relayStartBtn) == HIGH)
-//   {
-//     Serial.println("-- relayStartBtn --");
-//     if (isRelayRestart) {
-//            isBoxOpen = false;
-//            isTRelay = false;
-//            isWeaponStart = false;
-//            init2();
-//            // ---
-//            isRelayRestart = false;
-//                    
-//     } else {isRelayStart = true;}
-//   }
    
   //-------------------------------------------------   BOX   ---------------------------------------------------- 
   //  isRelayStart --> TRUE isBoxOpen -- > FALSE
@@ -419,7 +355,7 @@ void loop() {
     int value2 = debouncer2.read();
     
     if ((value2 == HIGH)) {   
-    //if (digitalRead(relayReserveBtn) == HIGH){
+      //if (digitalRead(relayReserveBtn) == HIGH){
       // включаем    
       Serial.println("RESERVE");
       digitalWrite(relay, LOW);
@@ -430,75 +366,103 @@ void loop() {
       delay(300);
     
       digitalWrite(relay_2, HIGH); // Отключить Реле
+
       
-      if (!isStart) {
-         isRelayStart = true;
-         isStart = true;
+      init2();
       
-      }
+      isRelayStart = true;
+      isStart = true;
+      sc_start_mag = millis();
+      
+//      if (!isStart) {
+//         isRelayStart = true;
+//         isStart = true;
+//      } // ---
+      
     }
 
     
     // END RESERVE
     
     // ----
-  int value3 = debouncer3.read();  
-  //if ((value3 == HIGH)&&(isRest)) {   
+//  int value3 = debouncer3.read();  
+//  //if ((value3 == HIGH)&&(isRest)) {   
+//  
+//  if ((value3 == HIGH)) {   
+//  
+//  //  if (digitalRead(btnRest) == HIGH){
+//   Serial.print("R-Btn");
+//   digitalWrite(ledRest, HIGH);
+//   delay(60);
+//    
+//   //
+//   Serial.println("----------------------------------------------------------    RESTART");
+//   isRelayStart = false;
+//   isBoxOpen = false;
+//   // ---------------------
+//   isMag = false;
+//   isTRelay = false;
+//   isR1 = false;
+//   isR2 = false;
+//   // ---------------------
+//   isWeaponStart = false;
+//   isIrStart = false;
+//   // ---------------------   
+//   init2();
+//   // ---------------------   
+//   isWIN = false;
+//   isStart = false;    
+//
+//  }// END REST
+//  
   
-  if ((value3 == HIGH)) {   
-  
-  //  if (digitalRead(btnRest) == HIGH){
-   Serial.print("R-Btn");
-   digitalWrite(ledRest, HIGH);
-   delay(60);
-    
-   //
-   Serial.println("----------------------------------------------------------    RESTART");
-   isBoxOpen = false;
-   isTRelay = false;
-   isWeaponStart = false;
-   isIrStart = false;
-   
-   init2();
-   // ---
-   isWIN = false;
-   isStart = false;    
-
-  // isRest = false;
-   //  
-   // digitalWrite(ledRest, LOW);
-    
-  }// END REST
-  
-  
-    // ----
- 
+    // ####################################  RELAY  ###########################
+     
     if ((isRelayStart)&& (!isBoxOpen)) { 
-    if (!isTRelay) {
+    
+      
+    //      
+    if (!isMag) {
+      Serial.println("roomLight -------------------------> ON-roomLight-ON");
+      digitalWrite(roomLightRelay, LOW);
+      
+      Serial.println("MAG -------------------------> ON-MAG-ON");
+      digitalWrite(MagRelay, LOW);
+      if ((millis() - sc_start_mag > 1000)) {
+        Serial.println("-----------------------------------------------------------> PIKACHU");
+        isMag = true;
+        isTRelay = true;
+      }
+      
+    }
+    
+    if (isTRelay) {
       sc_start_relay = millis(); // замеряем время до начала подключения
-      isTRelay = true;
+      isTRelay = false;
       Serial.print(sc_start_relay);
-    }
-    //
-    
-    digitalWrite(MagRelay, LOW);
-    
-    digitalWrite(relay, LOW);
-    Serial.println("Relay1 - ONN ");  // Включить Реле
-    //Serial.println(millis() - sc_start_relay);
-    
-    if ((millis() - sc_start_relay > 600) && (!isR1)) {
-      digitalWrite(relay_2, LOW);
-      digitalWrite(relay, HIGH);  // Отключить Реле
-      Serial.println("Relay_2 - ONN ");
+      Serial.println("Relay -------------------------> ON : 1");  // Включить Реле
+      digitalWrite(relay, LOW);
       isR1 = true;
-      Serial.print(sc_start_relay);
-      isR2 = true;
     }
     
-    if ((millis() - sc_start_relay > 600)&&(isR2)) {
-      Serial.println("Relay_2    -- - - - - OFF ");
+    if ((millis() - sc_start_relay > 500) && (isR1)) {
+      Serial.println("Relay -------------------------> OFF : 1");    
+      digitalWrite(relay, HIGH);  // Отключить Реле
+      Serial.println("Relay -------------------------> ON : 2");    
+      digitalWrite(relay_2, LOW);
+      isR1 = false; // OFF if
+      isR2 = true; // STRAT if
+      
+      sc_start_relay = millis();
+    }
+    
+    if ((millis() - sc_start_relay > 500) && (isR2)) {
+      Serial.println("Relay -------------------------> OFF : 2");    
       digitalWrite(relay_2, HIGH); // Отключить Реле
+      Serial.println("MAG -------------------------> OFF-MAG-OFF");
+      digitalWrite(MagRelay, HIGH);
+      
+      isR2 = false; // OFF if
       isBoxOpen = true;
       isWeaponStart = true;
       isRelayRestart = true;
@@ -513,11 +477,18 @@ void loop() {
   // isWeaponStart   -- > TRUE
   
   if (isWeaponStart) {
-    if (millis() - sc_start_weapon > 6000) {
+    if (millis() - sc_start_weapon > 1000) {
     
       Serial.print("isWeaponStart : ");
       Serial.println(isWeaponStart);
-    
+      
+      ledBot1.UpdateON();
+      ledBot2.UpdateON();
+
+      clearDisplaySPI();
+      s7sSendStringSPI_1((String)health[firstBot] + "--");
+      s7sSendStringSPI_2((String)health[secondBot] + "--");
+      
       weapon_1.Attach(43);
       weapon_2.Attach(41);
 
@@ -529,7 +500,6 @@ void loop() {
     
       sc_start = millis();
       // CLOSE     
-      digitalWrite(MagRelay, HIGH);
   
     }
   }// isWeaponStart
@@ -543,7 +513,7 @@ void loop() {
   
   if (isIrStart) {
     Serial.print("+++++++++++ IrStart +++++++ ");
-  if (millis() - sc_start_ir > 2000) {
+  if (millis() - sc_start_ir > 1400) {
       
     
   for (int i=0; i<rcv_count; ++i){
@@ -648,6 +618,9 @@ void loop() {
     weapon_2.Detach();
     
     isKeyBox = true;
+    Serial.println("roomLight -------------------------> OFF-roomLight-OFF");
+    digitalWrite(roomLightRelay, HIGH);
+    
    }
   
   if (((millis() - sc_start_key > 7000) && (millis() - sc_start_key < 10000))&&(isKeyBox)) {
@@ -656,6 +629,7 @@ void loop() {
      delay(120);
      keyBox.Detach();
      isKeyBox = false;
+     init2();
   }
     
   
@@ -775,8 +749,26 @@ void setDecimalsSPI(byte decimals)
 }
 
 void init2() {
-  ledBot1.UpdateON();
-  ledBot2.UpdateON();
+  
+   isRelayStart = false;
+   isBoxOpen = false;
+   // ---------------------
+   isMag = false;
+   isTRelay = false;
+   isR1 = false;
+   isR2 = false;
+   // ---------------------
+   isWeaponStart = false;
+   isIrStart = false;
+   // ---------------------   
+   isWIN = false;
+   isStart = false;    
+
+//  ledBot1.UpdateON();
+//  ledBot2.UpdateON();
+   ledBot1.UpdateOFF();
+   ledBot2.UpdateOFF();
+
   health[firstBot] = 100;
   health[secondBot] = 100;
   
@@ -797,7 +789,7 @@ void init2() {
   keyBox.Detach();
   weapon_1.Detach();
   weapon_2.Detach();
-  s7sSendStringSPI_1((String)health[firstBot] + "--");
-  s7sSendStringSPI_2((String)health[secondBot] + "--");
+ // s7sSendStringSPI_1((String)health[firstBot] + "--");
+ // s7sSendStringSPI_2((String)health[secondBot] + "--");
 
 }
