@@ -144,9 +144,9 @@ void loop() {
   } 
  
     analogWrite (speakerPin, 0);
-    delay(50);
+    delay(80);
     analogWrite (speakerPin, 255); 
-    delay(200);
+    delay(400);
   } 
   
   //Serial.println(position); 

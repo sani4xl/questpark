@@ -1,3 +1,5 @@
+#include <Bounce2.h>
+
 #include <SPI.h> // Include the Arduino SPI library
 //#include <Servo.h>
 #include "TM1637.h"
@@ -7,8 +9,8 @@ int doorPin = 41;
 int activationPin = 39;
 int lightPin = 37;
 int activationButtonState = 0;
-
-int explosionTime = 5000;
+boolean fewCutPerSession = false;
+int explosionTime = 7000;
 
 // anturage motors
 int liqMotorA = 9;
@@ -90,14 +92,23 @@ const int wire2Pin = 5;
 const int wire3Pin = 6;
 const int wire4Pin = 7;
 
+Bounce wireBounce1 = Bounce(); 
+Bounce wireBounce2 = Bounce(); 
+Bounce wireBounce3 = Bounce(); 
+Bounce wireBounce4 = Bounce(); 
+
 // WIRE 1 - BLUE   - 4
 // WIRE 2 - WHITE  - 5
 // WIRE 3 - GREEN  - 6
 // WIRE 4 - ORANGE - 7
 // WHITE -> ORANGE -> BLUE -> GREEN
 
-int defuseOptions[2][4] = {{wire2Pin, wire4Pin, wire1Pin, wire3Pin},
+/*int defuseOptions[2][4] = {{wire2Pin, wire4Pin, wire1Pin, wire3Pin},
                            {0, 0, 0, 0}};
+                           */
+int defuseOptions[2][4] = {{2, 4, 1, 3},
+                           {0, 0, 0, 0}};
+                                                      
 long subDefuseTime = 0;
 int isBombDefused = 0;
 int wireCutIndex = 0 ;                           
@@ -190,7 +201,7 @@ void initAnturageMotors(){
   //pinMode(in4, OUTPUT);
   //analogWrite(enA, 30);
   analogWrite(liqMotorEn, 130);
-  analogWrite(cdMotorEn, 50);
+  analogWrite(cdMotorEn, 70);
 }
 
 void startGame(){
@@ -258,8 +269,6 @@ void startGame(){
   
   shutDownAnturage();
   
-  
-  
   wireCutIndex = 0 ;
   isLost = false;
   
@@ -297,8 +306,49 @@ void initCable(){
   pinMode(wire2Pin, INPUT);
   pinMode(wire3Pin, INPUT);
   pinMode(wire4Pin, INPUT);
+
+  wireBounce1.attach(wire1Pin);
+  wireBounce1.interval(5); // interval in ms
+  
+  wireBounce2.attach(wire2Pin);
+  wireBounce2.interval(5); // interval in ms
+  
+  wireBounce3.attach(wire3Pin);
+  wireBounce3.interval(5); // interval in ms
+  
+  wireBounce4.attach(wire4Pin);
+  wireBounce4.interval(5); // interval in ms
 }
 
+Bounce getBounceByIndex(int index){
+
+    switch(index){
+      case 1:
+      return wireBounce1;
+      break;
+
+      case 2:
+      return wireBounce2;
+      break;
+
+      case 3:
+      return wireBounce3;
+      break;
+
+      case 4:
+      return wireBounce4;
+      break;
+    }
+  
+
+}
+
+void updateBounces(){
+  wireBounce1.update();
+  wireBounce2.update();
+  wireBounce3.update();
+  wireBounce4.update();
+}
 
 void checkWires(){
   
@@ -306,11 +356,21 @@ void checkWires(){
   if(!onUpActivated){
     return;
   }
+
+  updateBounces();
   
   
-  
+  int cuts_per_session = 0;
+  boolean wrongCut = false;
+  boolean wireHasBeenCut = false;
   for(int i  = 0; i < 4; i++){
-    int isWireOn = digitalRead(defuseOptions[0][i]);
+    Bounce tmpBounce = getBounceByIndex(defuseOptions[0][i]);
+    //Serial.println(tmpBounce);
+    //tmpBounce.update();
+    int isWireOn = tmpBounce.read();
+    //Serial.print(isWireOn);
+    //Serial.println(defuseOptions[0][i]);
+    //int isWireOn = digitalRead(defuseOptions[0][i]);
     if(defuseOptions[1][i]){
       isWireOn = false;
     }
@@ -325,11 +385,14 @@ void checkWires(){
         }
         else{
           Serial.println (" WRONG!!!");
-          subDefuseTime += wrongWireExtraTime;
-          timerRunDown();
+          //subDefuseTime += wrongWireExtraTime;
+          //timerRunDown();
+          wrongCut = true;
         }
+        cuts_per_session++;
         delay(100);
-        return;
+        wireHasBeenCut = true;
+        //break;
       }
       else{
         if(i == wireCutIndex){
@@ -338,6 +401,28 @@ void checkWires(){
       }
     }
   }
+  
+  if(cuts_per_session >= 2){
+    Serial.print(cuts_per_session);
+    Serial.println (" cuts per session!!!");
+    for(int k = 0; k < cuts_per_session; k++){
+      subDefuseTime += wrongWireExtraTime;
+    }
+    timerRunDown();
+  }
+  
+  if(wrongCut){
+     subDefuseTime += wrongWireExtraTime;
+     timerRunDown();
+     //return;
+  }  
+  
+  if(wireHasBeenCut){
+    return;
+  }
+           
+  
+  
   
   if(wireCutIndex >= 4){
     isBombDefused = true; 
@@ -372,6 +457,14 @@ void explode(){
     
   //digitalWrite(ssPin, LOW);  
   isLost = true;
+  
+  // sound
+  int beepDelay = 150;
+  int beepsCount = 20;
+  for(int i = 0 ; i < beepsCount; i++){
+    
+    beep(beepDelay - i * 7);
+  }
     
   digitalWrite(explodePin, LOW); 
   
@@ -391,6 +484,7 @@ void shutDownAnturage(){
   stopCdMotor();  
   digitalWrite (ledPin2, LOW);
   digitalWrite (ledPin1, LOW); 
+  digitalWrite(doorPin, HIGH);
 }
 
 void stopGame(){
@@ -467,7 +561,7 @@ void lifting(){
     if(!onUpPreActivated){
       onUpPreActivated = true;
     }
-    Serial.println("up reached");  
+    //Serial.println("up reached");  
     digitalWrite(lightPin, LOW);
     
   }
@@ -651,6 +745,10 @@ void timerRunDown(){
   int var = 0;
   int cnt = 0;  
   
+  analogWrite (speakerPin, 0);
+  //delay(delayms); //ждем 100 Мс
+  
+  
   while(var < 1000){
     cnt = countdownTime - var;
     displayNumber((String)cnt);
@@ -660,6 +758,8 @@ void timerRunDown(){
     }
     var++;
   }
+  
+  analogWrite (speakerPin, 255);
 }
   //
 void displayNumber(String line){
@@ -718,9 +818,13 @@ void dec(int isEvenNumber){
 }
 
 void led(int isEvenNumber){
-  if (isEvenNumber % 2 == 0) { digitalWrite (ledPin1, HIGH);digitalWrite (ledPin2, LOW);  
+  if (isEvenNumber % 2 == 0) { 
+     digitalWrite (ledPin1, HIGH);
+     digitalWrite (ledPin2, LOW);  
   //tone (speakerPin, 777);
-  } else{ digitalWrite (ledPin1, LOW);digitalWrite (ledPin2, HIGH);
+  } else{ 
+    digitalWrite (ledPin1, LOW);
+    digitalWrite (ledPin2, HIGH);
   //digitalWrite(speakerPin, LOW);
    //noTone(speakerPin); 
  }
