@@ -104,12 +104,12 @@ class Sweeper
           pos = 90;
           servo.write(pos);
           //delay(200);
-          Serial.print("POS:");
-          Serial.println(pos);
+          //Serial.print("POS:");
+         // Serial.println(pos);
 
           break;
         case 2:
-          Serial.print("Hit - server 2");
+          //Serial.print("Hit - server 2");
           pos = random(95,120); 
           
 //          if (pos >= 100) {
@@ -120,25 +120,25 @@ class Sweeper
 //          } // end IF
           
           servo.write(pos);
-          //delay(200);
-          Serial.print("POS:");
-          Serial.println(pos);
+          delay(200);
+          //Serial.print("POS:");
+          //Serial.println(pos);
           break;
         case 3:
-          Serial.print("Hit - server 3");
+          //Serial.print("Hit - server 3");
           pos = 0;
           servo.write(pos);
-          //delay(200);
-          Serial.print("POS:");
-          Serial.println(pos);
+          delay(200);
+          //Serial.print("POS:");
+         // Serial.println(pos);
           break;
         case 4:
-          Serial.print("Hit - server 3");
+          //Serial.print("Hit - server 3");
           pos = 160;
           servo.write(pos);
-          //delay(200);
-          Serial.print("POS:");
-          Serial.println(pos);
+          delay(200);
+          //Serial.print("POS:");
+          //Serial.println(pos);
           break;
 
 
@@ -512,7 +512,7 @@ void loop() {
 //   isIrStart --> TRUE
   
   if (isIrStart) {
-    Serial.print("+++++++++++ IrStart +++++++ ");
+   // Serial.print("+++++++++++ IrStart +++++++ ");
   if (millis() - sc_start_ir > 1400) {
       
     
@@ -520,16 +520,16 @@ void loop() {
     decode_results results;
     if (all_rcv[i]->decode(&results)) {
       int btn = DecodeButton(results.value);
-  //    Serial.print("Rcv_");
-  //    Serial.print(i);
-  //    Serial.print(":");
-  //    Serial.println(btn);
-  //    Serial.println(results.value, HEX);
-      // BTN_UNKNOWN = 101
+//      Serial.print("Rcv_");
+//      Serial.print(i);
+//      Serial.print(":");
+//      Serial.println(btn);
+//      Serial.println(results.value, HEX);
+//      // BTN_UNKNOWN = 101
       
       
       if (btn == 101) { 
- //         Serial.println(" ---  FAIL  ---");
+//          Serial.println(" ---  FAIL  ---");
           if ((millis()- sc_start > 1200)) {
            sc_start = millis();
            isBtnUnk = true;
@@ -540,7 +540,7 @@ void loop() {
       isBtnUnk = false;
       // BOT #1
       if ( ((i == 0)||(i == 1)) && (!isDied[firstBot]) ){
-   //       Serial.println("BOT -1- SHOOT");
+//          Serial.println("BOT -1- SHOOT");
          // 
           ledBot1.Update();
           
@@ -561,7 +561,7 @@ void loop() {
       }
       // BOT #2
       if ( ((i == 2)||(i == 3)) && (!isDied[secondBot])) {
-       //   Serial.println("BOT -2- SHOOT");
+//          Serial.println("BOT -2- SHOOT");
           
           
           ledBot2.Update();

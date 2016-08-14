@@ -4,6 +4,7 @@
 #include <Wire.h>
  
 const int relayStartPin = A1;
+const int relayAvtomatPin = A2;
 
 const int ledPin = 13;    // статус готовности бокса
 const int piezoPin = 3;   //
@@ -63,6 +64,10 @@ void setup() {
     pinMode(relayStartPin, OUTPUT);
     digitalWrite(relayStartPin, LOW);
     
+    pinMode(relayAvtomatPin, OUTPUT);
+    digitalWrite(relayAvtomatPin, HIGH);
+    
+    
     sc_led = millis();
     countLed = 0;
 }
@@ -102,6 +107,7 @@ void loop() {
       digitalWrite(ledPin, HIGH);
       isFinishPress = false;
       isFinishLed = false;
+      digitalWrite(relayAvtomatPin, HIGH);
      // if (isRelayRestart) {
      //   digitalWrite(relayStartPin, HIGH);
      //   delay(1000);
@@ -191,6 +197,9 @@ void loop() {
     
     // Кнопка была нажата 10 сек
     if (isFinishSound) {
+        digitalWrite(relayAvtomatPin, LOW);
+        Serial.println("relayStartPin - OFF ");
+        
         Serial.print("- Music -");
         // Music On
         for (int i = 0; i < numTones; i++)
@@ -223,6 +232,7 @@ void loop() {
         
         digitalWrite(relayStartPin, HIGH);
         Serial.println("relayStartPin - ONN ");
+        
         //delay(100);
         //digitalWrite(relayStartPin, HIGH);
       
@@ -235,9 +245,16 @@ void loop() {
     //
     if ((millis() - sc_start_relay > 1100)) {
         digitalWrite(relayStartPin, LOW);
+       
         isRelayRestart = true;
         Serial.println("relayStartPin - OFF ");
     }
+    //
+    if ((millis() - sc_start_relay > 20000)) {
+       // digitalWrite(relayAvtomatPin, HIGH);
+        Serial.println("relayAvtomatPin - ON ");
+     
+  }
   
     delay(10);
 }//END SKETCH
