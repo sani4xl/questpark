@@ -1,7 +1,7 @@
 #include <Keypad.h>
-#include <Servo.h>
+//#include <Servo.h>
 
-Servo servo_Motor;
+//Servo servo_Motor;
 char* password = "8294";
 int password_len = 4;
 
@@ -10,11 +10,13 @@ int guessed_digit = 0;
 boolean mlocked = true;
 int speakerPin = 13;
 
+int relePin = 12;
+
 String enteredPassword = "";
 
 //int buttonPin = 13;
-int redPin = 10;
-int greenPin = 11;
+int redPin = 11;
+int greenPin = 10;
 
 const byte ROWS = 4; // Four rows
 const byte COLS = 3; // Three columns
@@ -45,7 +47,7 @@ void setup()
   //pinMode(ledpin,OUTPUT);
   //digitalWrite(ledpin, HIGH);
   
-  servo_Motor.attach(9);
+  //servo_Motor.attach(9);
   
   
   pinMode (speakerPin, OUTPUT);
@@ -54,8 +56,10 @@ void setup()
   analogWrite (speakerPin, 255);
   delay(100);
   
+  pinMode (relePin, OUTPUT);
+  digitalWrite(relePin, LOW);
+  //servo_Motor.write(0);
   
-  servo_Motor.write(0);
   mlocked = false;
   setLocked(true);
   
@@ -154,12 +158,14 @@ void setLocked(boolean locked){
  if (locked){
    digitalWrite(redPin, HIGH);
    digitalWrite(greenPin, LOW);
-   servo_Motor.write(0);
+   //servo_Motor.write(0);
+   digitalWrite(relePin, LOW);
  }
  else{
   
   //Serial.println("unlocked");
-  servo_Motor.write(90);
+  //servo_Motor.write(90);
+  digitalWrite(relePin, HIGH);
   
   digitalWrite(redPin, LOW);
   digitalWrite(greenPin, HIGH);

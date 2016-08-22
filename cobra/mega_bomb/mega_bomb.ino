@@ -8,6 +8,7 @@ int explodePin = 43;
 int doorPin = 41;
 int activationPin = 39;
 int lightPin = 37;
+int winSoundPin = 35;
 int activationButtonState = 0;
 boolean fewCutPerSession = false;
 int explosionTime = 7000;
@@ -97,6 +98,10 @@ Bounce wireBounce2 = Bounce();
 Bounce wireBounce3 = Bounce(); 
 Bounce wireBounce4 = Bounce(); 
 
+Bounce startButtonBounce = Bounce(); 
+//Bounce downButtonBounce = Bounce(); 
+//Bounce upButtonBounce = Bounce(); 
+
 // WIRE 1 - BLUE   - 4
 // WIRE 2 - WHITE  - 5
 // WIRE 3 - GREEN  - 6
@@ -149,6 +154,10 @@ void setup()
    
    pinMode(doorPin, OUTPUT); 
    digitalWrite(doorPin, HIGH);
+
+   pinMode(winSoundPin, OUTPUT);
+   digitalWrite(winSoundPin, HIGH);
+   
    
    pinMode(activationPin, INPUT);
    
@@ -169,6 +178,19 @@ void setup()
    pinMode(buttonUp, INPUT);
    pinMode(buttonDown, INPUT);
    pinMode(buttonStrartPin, INPUT);
+
+   startButtonBounce.attach(buttonStrartPin);
+   startButtonBounce.interval(10); //
+
+   /*
+   downButtonBounce.attach(buttonDown);
+   downButtonBounce.interval(10); //
+
+   upButtonBounce.attach(buttonUp);
+   upButtonBounce.interval(10); //
+   */
+
+   
    pinMode(stopperDown, INPUT);
    pinMode(stopperUp, INPUT);
   
@@ -285,6 +307,7 @@ void startGame(){
   }
   lastStartTime = millis();
   digitalWrite(doorPin, LOW); 
+  digitalWrite(winSoundPin, HIGH);
   
 }
 
@@ -348,6 +371,12 @@ void updateBounces(){
   wireBounce2.update();
   wireBounce3.update();
   wireBounce4.update();
+}
+
+void updateButtonsBounces(){
+  startButtonBounce.update();
+  //upButtonBounce.update();
+  //downButtonBounce.update();
 }
 
 void checkWires(){
@@ -438,7 +467,8 @@ void doWin(){
   
   winDone = true;
   shutDownAnturage();
-  playStarWars();
+  //playStarWars();
+  digitalWrite(winSoundPin, LOW);
 }
 
 void explode(){
@@ -476,7 +506,7 @@ void explode(){
   delay(explosionTime);
   digitalWrite(explodePin, HIGH); 
   
-  playDartWader();
+  //playDartWader();
 }
 
 void shutDownAnturage(){
@@ -493,13 +523,14 @@ void stopGame(){
   isWin = false;
   preUpActivatedSeconds = 0;
   digitalWrite(doorPin, HIGH); 
+  //digitalWrite(winSoundPin, HIGH);
   shutDownAnturage();
 }
 
 void loop()
 {
   
-   
+  updateButtonsBounces(); 
 //  buttonState = digitalRead(buttonPin);
 //  if (buttonState == HIGH) {   
 //     counting = true; 
@@ -566,13 +597,15 @@ void lifting(){
     
   }
   
-  if(digitalRead(buttonStrartPin)){
+  //if(digitalRead(buttonStrartPin)){
+  if(startButtonBounce.read()){
     Serial.println("start button pressed");  
+    delay(250);
     startGame();
     
   }
   
-  buttonUpState = digitalRead(buttonUp);
+  buttonUpState =   digitalRead(buttonUp);
   buttonDownState = digitalRead(buttonDown);
   
   if(buttonDownState){
