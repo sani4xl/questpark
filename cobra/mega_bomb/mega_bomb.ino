@@ -449,9 +449,6 @@ void checkWires(){
   if(wireHasBeenCut){
     return;
   }
-           
-  
-  
   
   if(wireCutIndex >= 4){
     isBombDefused = true; 
@@ -467,8 +464,9 @@ void doWin(){
   
   winDone = true;
   shutDownAnturage();
-  //playStarWars();
   digitalWrite(winSoundPin, LOW);
+  delay(15000); // playing 15 sec 
+  digitalWrite(winSoundPin, HIGH);
 }
 
 void explode(){
@@ -523,7 +521,7 @@ void stopGame(){
   isWin = false;
   preUpActivatedSeconds = 0;
   digitalWrite(doorPin, HIGH); 
-  //digitalWrite(winSoundPin, HIGH);
+  digitalWrite(winSoundPin, HIGH);
   shutDownAnturage();
 }
 

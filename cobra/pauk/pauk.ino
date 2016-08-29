@@ -1,3 +1,28 @@
+static int8_t Send_buf[8] = {0} ;
+
+const int timeBetweenTracks = 90; // in secs
+
+const int totalTracks = 31;
+int currentTrack = 1;
+
+#define CMD_PLAY_W_INDEX 0X03
+#define CMD_SET_VOLUME 0X06
+#define CMD_SEL_DEV 0X09
+  #define DEV_TF 0X02
+#define CMD_PLAY 0X0D
+#define CMD_PAUSE 0X0E
+#define CMD_STOP 0X16
+#define CMD_SINGLE_CYCLE 0X19
+  #define SINGLE_CYCLE_ON 0X00
+  #define SINGLE_CYCLE_OFF 0X01
+#define CMD_PLAY_W_VOL 0X22
+
+#include <SoftwareSerial.h>
+SoftwareSerial mp3Serial(4, 3); // RX, TX
+int lastTimePlay; // in sec
+int currentSec;
+
+SoftwareSerial RFID(2, 10); // RX and TX
 /*
  * ----------------------------------------------------------------------------
  * This is a MFRC522 library example; see https://github.com/miguelbalboa/rfid
@@ -24,7 +49,7 @@
  * SPI SCK     SCK          13 / ICSP-3   52        D13        ICSP-3           15
  *
  */
-
+/*
 #include <SPI.h>
 #include <MFRC522.h>
 
@@ -47,16 +72,21 @@ byte knownKeys[NR_KNOWN_KEYS][MFRC522::MF_KEY_SIZE] =  {
     {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}, // AA BB CC DD EE FF
     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}  // 00 00 00 00 00 00
 };
+*/
 
 /*
  * Initialize.
  */
 void setup() {
+    
     Serial.begin(9600);         // Initialize serial communications with the PC
-    while (!Serial);            // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
-    SPI.begin();                // Init SPI bus
-    mfrc522.PCD_Init();         // Init MFRC522 card
+    //while (!Serial);            // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
+    //SPI.begin();                // Init SPI bus
+    //mfrc522.PCD_Init();         // Init MFRC522 card
+    
     //Serial.println(F("Try the most used default keys to print block 0 of a MIFARE PICC."));
+    initMp3Player();
+    RFID.begin(9600);    // start serial to RFID reader
 }
 
 /*
@@ -75,6 +105,7 @@ void dump_byte_array(byte *buffer, byte bufferSize) {
  *
  * @return true when the given key worked, false otherwise.
  */
+ /*
 boolean try_key(MFRC522::MIFARE_Key *key)
 {
     boolean result = false;
@@ -82,7 +113,7 @@ boolean try_key(MFRC522::MIFARE_Key *key)
     byte block = 0;
     byte status;
     
-    // Serial.println(F("Authenticating using key A..."));
+     Serial.println(F("Authenticating using key A..."));
     status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, key, &(mfrc522.uid));
     if (status != MFRC522::STATUS_OK) {
         // Serial.print(F("PCD_Authenticate() failed: "));
@@ -101,15 +132,8 @@ boolean try_key(MFRC522::MIFARE_Key *key)
         // Successful read
         result = true;
         Serial.print("@");
-        /*
-        Serial.print(F("Success with key:"));
-        dump_byte_array((*key).keyByte, MFRC522::MF_KEY_SIZE);
-        Serial.println();
-        // Dump block data
-        Serial.print(F("Block ")); Serial.print(block); Serial.print(F(":"));
-        dump_byte_array(buffer, 16);
-        Serial.println();
-        */
+        //playPassword();
+        
     }
     Serial.println();
 
@@ -117,28 +141,44 @@ boolean try_key(MFRC522::MIFARE_Key *key)
     mfrc522.PCD_StopCrypto1();  // Stop encryption on PCD
     return result;
 }
+*/
 
 /*
  * Main loop.
  */
 void loop() {
     // Look for new cards
-    if ( ! mfrc522.PICC_IsNewCardPresent())
+    currentSec = millis() / 1000;
+    checkForNextTrack();
+    //delay(50);
+
+     if (RFID.available() > 0) {
+       int i = RFID.read();
+       if(i == 67){
+         //Serial.println("pika");
+         playPassword();
+        }
+        //Serial.print(i, DEC);
+        //Serial.print(" ");
+     }
+
+    delay(50);
+    return;
+
+    /*
+    if ( ! mfrc522.PICC_IsNewCardPresent()){
+        Serial.println("now is new card");
         return;
+    }   
 
     // Select one of the cards
-    if ( ! mfrc522.PICC_ReadCardSerial())
+    if ( ! mfrc522.PICC_ReadCardSerial()){
+        Serial.println("koko");
         return;
+    }    
 
     // Show some details of the PICC (that is: the tag/card)
-    /*
-    Serial.print(F("Card UID:"));
-    dump_byte_array(mfrc522.uid.uidByte, mfrc522.uid.size);
-    Serial.println();
-    Serial.print(F("PICC type: "));
-    byte piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
-    Serial.println(mfrc522.PICC_GetTypeName(piccType));
-    */
+   
     
     // Try the known default keys
     MFRC522::MIFARE_Key key;
@@ -154,4 +194,72 @@ void loop() {
             break;
         }
     }
+    */
+}
+
+void initMp3Player(){
+  lastTimePlay = millis() / 1000;
+  currentSec = millis() / 1000;
+  //pinMode(songs, INPUT_PULLUP);
+  //pinMode(alarm, INPUT);
+  //Serial1.begin(9600);
+  mp3Serial.begin(9600);
+  delay(500);//Wait chip initialization is complete
+  sendCommand(CMD_SEL_DEV, DEV_TF);//select the TF card  
+  delay(200);//wait for 200ms
+  sendCommand(CMD_SET_VOLUME, 0X0F);//установить громкость в 15 (50%)
+  
+  //sendCommand(0X17, 0X0102);//запустить зацикленное проигрывание содержимого папки "/01"
+  //sendCommand(CMD_SINGLE_CYCLE, SINGLE_CYCLE_OFF);//запустить зацикленное проигрывание содержимого папки "/01"
+  int songCode = word(0x01,1);
+  sendCommand(0X0F, songCode);// играем трек 001 из папки 01
+}
+
+void checkForNextTrack(){
+  
+  if( currentSec - lastTimePlay > timeBetweenTracks){
+    lastTimePlay = currentSec;
+    currentTrack++;
+    if(currentTrack > totalTracks){//totalTracks){
+      currentTrack = 1;
+    }
+
+    int songCode = word(0x01, currentTrack);
+    sendCommand(0X0F, songCode);// играем трек 001 из папки 01
+    
+  }
+}
+
+int passwordPlayingTime = 0;
+void playPassword(){
+  //if(passwordIsPlaying)
+  if(currentSec - passwordPlayingTime < 0){
+    return;
+  }
+  Serial.println("play password");
+  // stop current track
+  sendCommand(CMD_STOP, 0x00);//select the TF card  
+  // playing password track
+  int songCode = word(0x02, 0x01);
+  sendCommand(0X0F, songCode);// играем трек 001 из папки 02
+  passwordPlayingTime = currentSec + 20;
+  lastTimePlay = currentSec + 30;
+  
+}
+
+void sendCommand(int8_t command, int16_t dat)
+{
+  delay(20);
+  Send_buf[0] = 0x7e; //starting byte
+  Send_buf[1] = 0xff; //version
+  Send_buf[2] = 0x06; //the number of bytes of the command without starting byte and ending byte
+  Send_buf[3] = command; //
+  Send_buf[4] = 0x00;//0x00 = no feedback, 0x01 = feedback
+  Send_buf[5] = (int8_t)(dat >> 8);//datah
+  Send_buf[6] = (int8_t)(dat); //datal
+  Send_buf[7] = 0xef; //ending byte
+  for(uint8_t i=0; i<8; i++)//
+  {
+    mp3Serial.write(Send_buf[i]) ;
+  }
 }
