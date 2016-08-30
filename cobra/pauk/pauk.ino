@@ -207,7 +207,9 @@ void initMp3Player(){
   delay(500);//Wait chip initialization is complete
   sendCommand(CMD_SEL_DEV, DEV_TF);//select the TF card  
   delay(200);//wait for 200ms
-  sendCommand(CMD_SET_VOLUME, 0X0F);//установить громкость в 15 (50%)
+  //sendCommand(CMD_SET_VOLUME, 0X0F);//установить громкость в 15 (50%)
+  sendCommand(CMD_SET_VOLUME, 0X16);//установить громкость в x1E=30 (100%)
+
   
   //sendCommand(0X17, 0X0102);//запустить зацикленное проигрывание содержимого папки "/01"
   //sendCommand(CMD_SINGLE_CYCLE, SINGLE_CYCLE_OFF);//запустить зацикленное проигрывание содержимого папки "/01"
