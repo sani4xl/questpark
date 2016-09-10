@@ -154,7 +154,8 @@ void loop() {
 
      if (RFID.available() > 0) {
        int i = RFID.read();
-       if(i == 67){
+       Serial.println(i, DEC);
+       if(i == 67 || i == 65){
          //Serial.println("pika");
          playPassword();
         }
