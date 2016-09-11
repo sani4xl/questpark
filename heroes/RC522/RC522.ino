@@ -2,7 +2,8 @@
 #include <MFRC522.h>
 
 
-
+const int ledPin1 =  2; 
+const int ledPin2 =  3; 
 
 #define RST_PIN         9          // Configurable, see typical pin layout above
 #define SS_1_PIN        10         // Configurable, take a unused pin, only HIGH/LOW required, must be diffrent to SS 2
@@ -10,7 +11,7 @@
 
 #define NR_OF_READERS   2
 
-byte ssPins[] = {SS_1_PIN};//, SS_2_PIN};
+byte ssPins[] = {SS_1_PIN, SS_2_PIN};
 
 MFRC522 mfrc522[NR_OF_READERS];   // Create MFRC522 instance.
 
@@ -24,6 +25,9 @@ void setup() {
 
   SPI.begin();        // Init SPI bus
 
+  pinMode(ledPin1, OUTPUT);
+  pinMode(ledPin2, OUTPUT);
+
   for (uint8_t reader = 0; reader < NR_OF_READERS; reader++) {
     mfrc522[reader].PCD_Init(ssPins[reader], RST_PIN); // Init each MFRC522 card
     Serial.print(F("Reader "));
@@ -31,11 +35,26 @@ void setup() {
     Serial.print(F(": "));
     mfrc522[reader].PCD_DumpVersionToSerial();
   }
+
+  digitalWrite(ledPin1, HIGH);
+  digitalWrite(ledPin2, HIGH);
 }
 
 /**
  * Main loop.
  */
+byte mac[] = { 0xE6, 0x09, 0xEB, 0x06};
+
+bool compareMac(byte *mac, byte *cardByte){
+   
+   for (byte i = 0; i < 4; i++) {
+      if( mac[i] != cardByte[i]){
+         return false;
+      }
+   }
+   return true; 
+}
+
 void loop() {
 
   for (uint8_t reader = 0; reader < NR_OF_READERS; reader++) {
@@ -47,6 +66,9 @@ void loop() {
       // Show some details of the PICC (that is: the tag/card)
       Serial.print(F(": Card UID:"));
       dump_byte_array(mfrc522[reader].uid.uidByte, mfrc522[reader].uid.size);
+      bool isValid = compareMac(mac, mfrc522[reader].uid.uidByte);
+      Serial.print(" Valid: ");
+      Serial.print(isValid);
       Serial.println();
       Serial.print(F("PICC type: "));
       MFRC522::PICC_Type piccType = mfrc522[reader].PICC_GetType(mfrc522[reader].uid.sak);
