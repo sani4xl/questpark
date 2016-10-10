@@ -99,8 +99,10 @@ Bounce wireBounce3 = Bounce();
 Bounce wireBounce4 = Bounce(); 
 
 Bounce startButtonBounce = Bounce(); 
-//Bounce downButtonBounce = Bounce(); 
-//Bounce upButtonBounce = Bounce(); 
+Bounce downButtonBounce = Bounce(); 
+Bounce upButtonBounce = Bounce(); 
+Bounce activationBounce = Bounce(); 
+
 
 // WIRE 1 - BLUE   - 4
 // WIRE 2 - WHITE  - 5
@@ -182,13 +184,17 @@ void setup()
    startButtonBounce.attach(buttonStrartPin);
    startButtonBounce.interval(10); //
 
-   /*
+   
    downButtonBounce.attach(buttonDown);
    downButtonBounce.interval(10); //
-
+   
    upButtonBounce.attach(buttonUp);
    upButtonBounce.interval(10); //
-   */
+
+   activationBounce.attach(activationPin);
+   activationBounce.interval(10); //
+
+   
 
    
    pinMode(stopperDown, INPUT);
@@ -375,8 +381,9 @@ void updateBounces(){
 
 void updateButtonsBounces(){
   startButtonBounce.update();
-  //upButtonBounce.update();
-  //downButtonBounce.update();
+  upButtonBounce.update();
+  downButtonBounce.update();
+  activationBounce.update();
 }
 
 void checkWires(){
@@ -603,11 +610,13 @@ void lifting(){
     
   }
   
-  buttonUpState =   digitalRead(buttonUp);
-  buttonDownState = digitalRead(buttonDown);
+  //buttonUpState =   digitalRead(buttonUp);
+  buttonUpState =   upButtonBounce.rose();//read();
+  //buttonDownState = digitalRead(buttonDown);
+  buttonDownState = downButtonBounce.rose();
   
   if(buttonDownState){
-    Serial.print("DOWN PRESSED");  
+    Serial.println("DOWN PRESSED");  
     if(movingDown){
       movingDown = false;
     }
@@ -621,7 +630,7 @@ void lifting(){
     delay(250);
   }
   else if(buttonUpState){
-    Serial.print("UP PRESSED");  
+    Serial.println("UP PRESSED");  
     movingDown = false;
     if(movingUp){
       movingUp = false;
@@ -701,11 +710,13 @@ void count() {
       clearDisplaySPI();
     }
     
-    activationButtonState = digitalRead(activationPin);
+    //activationButtonState = digitalRead(activationPin);
+    activationButtonState = activationBounce.rose();
   
     
     if( ( secondsLeft < secondsLeftForLiftingUp || activationButtonState) && !bombActivated){// !liftedUp && notLiftedYet ){
       movingUp = true;
+      Serial.println("activation");
       //onUpActivated = false;
       notLiftedYet = false;
       bombActivated = true;
