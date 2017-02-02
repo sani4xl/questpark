@@ -80,7 +80,7 @@ const int ssPin = 38;
 
 // MEGA SDI pin = 51
 // mege sck pin = 52
-int countdownOptions[] = {1, 5, 15, 60, 45, 100}; //Possible values to count down from
+int countdownOptions[] = {1, 10, 15, 60, 45, 100}; //Possible values to count down from
 int countdownSetting = 3; 
 
 /*int cablePin[] = {4, 5, 6, 7};
@@ -115,7 +115,8 @@ Bounce activationBounce = Bounce();
                            */
 int defuseOptions[2][4] = {{2, 4, 1, 3},
                            {0, 0, 0, 0}};
-                                                      
+
+int defuseCounterThrashold = 10;                                                      
 long subDefuseTime = 0;
 int isBombDefused = 0;
 int wireCutIndex = 0 ;                           
@@ -127,7 +128,7 @@ boolean isLost = false;
 boolean exploded = false;
 boolean winDone = false;
 int countDef = 0;
-int wrongWireExtraTime = 15;// 20 ; // in minutes
+int wrongWireExtraTime = 7;// 20 ; // in minutes
 
 /* Values to prevent the button from bouncing */
 int buttonState;             // the current reading from the input pin
@@ -400,6 +401,7 @@ void checkWires(){
   boolean wrongCut = false;
   boolean wireHasBeenCut = false;
   for(int i  = 0; i < 4; i++){
+    int wireIndex = defuseOptions[0][i];
     Bounce tmpBounce = getBounceByIndex(defuseOptions[0][i]);
     //Serial.println(tmpBounce);
     //tmpBounce.update();
@@ -407,27 +409,50 @@ void checkWires(){
     //Serial.print(isWireOn);
     //Serial.println(defuseOptions[0][i]);
     //int isWireOn = digitalRead(defuseOptions[0][i]);
+
+    // wire already cut
     if(defuseOptions[1][i]){
       isWireOn = false;
     }
     
     if(!isWireOn){
-      if(!defuseOptions[1][i]){
+      // wire was not cut before
+      if(defuseOptions[1][i] < defuseCounterThrashold ){
         defuseOptions[1][i] = defuseOptions[1][i] + 1;
-        Serial.print(i);
-        Serial.println (" has been cut");
-        if(i == wireCutIndex){
-          wireCutIndex ++;  
-        }
-        else{
-          Serial.println (" WRONG!!!");
-          //subDefuseTime += wrongWireExtraTime;
-          //timerRunDown();
-          wrongCut = true;
-        }
-        cuts_per_session++;
-        delay(100);
-        wireHasBeenCut = true;
+        
+        if(defuseOptions[1][i] >= defuseCounterThrashold){
+          Serial.print(wireIndex);
+          Serial.print(" ");
+          if(i == 1){
+            Serial.print("BLUE WIRE");
+          }
+          else if(i == 2){
+            Serial.print("WHITE WIRE");
+          }
+          else if(i == 3){
+            Serial.print("GREEN WIRE");
+          }
+          else if(i == 4){
+            Serial.print("ORANGE WIRE");
+          }
+          
+
+          Serial.println (" has been cut");
+          if(i == wireCutIndex){
+            wireCutIndex ++;  
+          }
+          else{
+            Serial.println (" WRONG!!!");
+            //subDefuseTime += wrongWireExtraTime;
+            //timerRunDown();
+            wrongCut = true;
+          }
+
+          // preventing
+          cuts_per_session++;
+          delay(100);
+          wireHasBeenCut = true;
+        }  
         //break;
       }
       else{
