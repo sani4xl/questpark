@@ -12,6 +12,7 @@ const int ledMicPin = 7;
 const int ledShakePin = 6;
 
 int micTriggeredTime = 0;
+int micLastTime = 0;
 int shakeTriggeredTime = 0;
 
 int micTriggeringCount = 0;
@@ -28,6 +29,9 @@ int ledShakeActiveIndex = 0;
 const int ledStepTime = 100;
 int ledMicLastTime = 0;
 int ledShakeLastTime = 0;
+
+boolean isMicTop = false;
+boolean isShakeTop = false;
 
 void setup() {
   // put your setup code here, to run once:
@@ -70,9 +74,14 @@ void turnOffShakeLedLine(){
 }
 
 void checkMicLedLines(){
-  if(!ledMicActive){
+  /*if(!ledMicActive){
     return;  
+  }*/
+  if( !(ledMicActive || ledMicActiveIndex)){
+    return;
   }
+
+  Serial.println(ledMicActiveIndex);
 
   int currentMills = millis();
   if(currentMills - ledMicLastTime < ledStepTime){
@@ -94,17 +103,34 @@ void checkMicLedLines(){
    }  
    micPixels.show();
 
-   ledMicActiveIndex++;
+   if(ledMicActive){
+    ledMicActiveIndex++;
+   }
+   else{
+    ledMicActiveIndex--;
+   }
 
    if(ledMicActiveIndex >= NUMPIXELS){
-     ledMicActiveIndex = 0;
-     ledMicActive = false;
-     turnOffMicLedLine();
+     //ledMicActiveIndex = 0;
+     ledMicActiveIndex = NUMPIXELS - 1;
+     //ledMicActive = false;
+     isMicTop = true;
+     //turnOffMicLedLine();
    }
+   else {
+    isMicTop = false;
+   }
+
+   if(ledMicActiveIndex <= 0){
+    ledMicActiveIndex = 0;
+    turnOffMicLedLine();
+   }
+
+   ledMicActive = false;
 }
 
 void checkShakeLedLines(){
-  if(!ledShakeActive){
+  if(! (ledShakeActive || ledShakeActiveIndex)){
     return;  
   }
 
@@ -128,9 +154,24 @@ void checkShakeLedLines(){
    }  
    shakePixels.show();
 
-   ledShakeActiveIndex++;
+   if(ledShakeActive){
+    ledShakeActiveIndex++;
+   }
+   else{
+    ledShakeActiveIndex--;
+   }
 
    if(ledShakeActiveIndex >= NUMPIXELS){
+     isShakeTop = true;
+     //ledShakeActiveIndex = 0;
+     ledShakeActive = false;
+     //turnOffShakeLedLine();
+   }
+   else {
+    isShakeTop = false;
+   }
+
+   if(ledShakeActiveIndex <= 0){
      ledShakeActiveIndex = 0;
      ledShakeActive = false;
      turnOffShakeLedLine();
@@ -157,32 +198,45 @@ void loop() {
    // soundTriggerIndex
    //}
    
-   if(soundVal){// && !micTriggeredTime){
-     micTriggeredTime = currentMills;
+   if(soundVal){
+     micLastTime = currentMills;
+     if(!micTriggeredTime){
+       micTriggeredTime = currentMills;
+     }
      //micTriggeringCount++;
+     //Serial.println("sound");
    }
    
-   if(!soundVal){
+   if(!soundVal && (currentMills - micLastTime) > 300 ){
      //micTriggeringCount = 0;
-     //micTriggeredTime = 0;
+     micTriggeredTime = 0;
+     //Serial.println("jopa");
+     
    }
 
-   if(soundVal && micTriggeredTime > 0 &&  ((currentMills - micTriggeredTime) < 100) ){
-    soundTriggerIndex++;
-    if(soundTriggerIndex > 10){
+
+   if(micTriggeredTime > 0){
+    //Serial.println(currentMills - micTriggeredTime); 
+   }
+
+   //if(soundVal && 
+   if(micTriggeredTime > 0 &&  ((currentMills - micTriggeredTime) >= 500) ){
+    //soundTriggerIndex++;
+    Serial.println("sound");
+    //if(soundTriggerIndex > 10){
       turnOneMicLedLine();
-    }
+    //}
     //Serial.print(micTriggeredTime);
     //Serial.print( " ");
     //Serial.println(currentMills - micTriggeredTime );
    }
-   
-   else{
+   /*
+   else if((currentMills - micTriggeredTime) > 100){
     soundTriggerIndex--;
     if(soundTriggerIndex < 0){
       soundTriggerIndex = 0;
     }
-   }
+   }*/
 
    if(shakeVal){
      shakeTriggeredTime = currentMills;
@@ -191,7 +245,7 @@ void loop() {
    
    //Serial.print(shakeVal);
    //Serial.print(" ");
-   Serial.println(soundVal);
+   //Serial.println(soundVal);
 
    //if( shakeTriggeredTime > 0 && abs(shakeTriggeredTime - micTriggeredTime) < 500){
    if( shakeVal && micTriggeredTime > 0 && (currentMills - micTriggeredTime > 2000)  ){
