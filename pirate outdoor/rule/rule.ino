@@ -52,7 +52,7 @@
        delay(2000);
      }
    }
-   if(curRounds > 0 && roundsPath[curPathPos] < 0){
+   else if(curRounds > 0 && roundsPath[curPathPos] < 0){
       curPathPos = 0;
    }
    else if(curRounds < 0 && roundsPath[curPathPos] > 0){
