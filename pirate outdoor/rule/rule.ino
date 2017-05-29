@@ -12,19 +12,15 @@
  int value;
  boolean LeftRight;
 
- int rotationLeft = 0;
- int rotationRight = 0;
+ 
  const int stepsPerRound = 30;
  const int stepsPerRoundTrash = 29;
  int prevDirection = 0;
- int rotDiration = 0;
+ int rotDirection = 0;
  int directionDelta = 0;
 
  int curRoundPos = 0;
  int curRounds = 0;
-
- int leftRounds = 0;
- int rightRounds = 0;
 
  // left - 1
  // right +1
@@ -41,11 +37,9 @@
  } 
 
  void checkForWin(){
-   //Serial.print(roundsPath[curPathPos]);
-   //Serial.print(" : ");
-   //Serial.println( curRounds);
    if( roundsPath[curPathPos] == curRounds){
      curPathPos++;
+     curRounds = 0;
      if(curPathPos >= pathSteps){
        Serial.println("WIN");
        curPathPos = 0;
@@ -59,11 +53,9 @@
       curPathPos = 0;
    }
 
-   //if(prevCurPathPos != curPathPos){
-    Serial.print(" cur pos");
-    Serial.println(curPathPos);
+   if(prevCurPathPos != curPathPos){
     prevCurPathPos = curPathPos;
-   //}
+   }
    
  }
  
@@ -81,18 +73,18 @@
      if (LeftRight){ // turning right will turn on red led.
        //Serial.println ("clockwise");
        prevDirection = -1;
-       rotDiration = -1;
+       rotDirection = -1;
        //digitalWrite (RedLed, HIGH);
        //digitalWrite (GreenLed, LOW);
      }else{        // turning left will turn on green led.   
        //Serial.println("counterclockwise");
        prevDirection = 1;
-       rotDiration = 1;
+       rotDirection = 1;
        //digitalWrite (RedLed, LOW);
        //digitalWrite (GreenLed, HIGH);
      }
 
-     directionDelta += rotDiration;
+     directionDelta += rotDirection;
      if(directionDelta < -2){
        directionDelta = -2;
      }
@@ -103,17 +95,17 @@
       
      if(directionDelta == 0){
       Serial.println("switch direction");
-      curRoundPos = rotDiration;
+      curRoundPos = rotDirection;
       curRounds = 0;
      }
      else{
-      curRoundPos += rotDiration;
+      curRoundPos += rotDirection;
      }
 
      if ( abs(round(curRoundPos / stepsPerRoundTrash) ) >= 1){
         curRoundPos = 0 ;
         Serial.println("full round");
-        curRounds += rotDiration; 
+        curRounds += rotDirection; 
         Serial.println(curRounds);
         // += 
       
