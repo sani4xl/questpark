@@ -32,6 +32,7 @@ Adafruit_NeoPixel pixledIndexel2;
 Adafruit_NeoPixel pixel3;
 Adafruit_NeoPixel pixel4;
 */
+Adafruit_NeoPixel volcanoPixel = Adafruit_NeoPixel(NUMPIXELS, 10, NEO_GRB + NEO_KHZ800);
 boolean isActive = false;
 
 Bounce debouncer = Bounce(); 
@@ -64,6 +65,9 @@ void setup() {
     bouncers[i].attach(buttonPins[i]);
     bouncers[i].interval(5); // interval in ms
   }
+
+  volcanoPixel.begin();
+  volcanoPixel.show();
   //*/
   //pinMode(buttonPin, INPUT);
   //debouncer.attach(buttonPin);
@@ -98,6 +102,8 @@ void gameRestart(){
   lcd.print(char(ruU));
   lcd.print(char(ruL));
   lcd.print("KAH");
+
+  turnOnVolcano();
 
   reinitStrips();
 }
@@ -161,6 +167,18 @@ void lightPixels(Adafruit_NeoPixel &firstPixel, int ledIndex, int greenIndex){
     
    firstPixel.show(); 
    //delay(100);
+}
+
+void turnOnVolcano(){
+  
+  volcanoPixel.setPixelColor(0, volcanoPixel.Color(255,0,0)); // Moderately bright green color.
+  volcanoPixel.show();
+}
+
+void turnOffVolcano(){
+  
+  volcanoPixel.setPixelColor(0, volcanoPixel.Color(0,0,0)); // Moderately bright green color.
+  volcanoPixel.show();
 }
 
 void renderPixels(){
@@ -241,8 +259,9 @@ void checkForWin(){
     
   }
 
-  if(sum >= 1){//ledStripsCount){
+  if(sum >= ledStripsCount){
     Serial.println("win");  
+    turnOffVolcano();
     renderWinMsg();
     isWin = true;
     for(int i =0; i< 5; i++){
@@ -253,7 +272,7 @@ void checkForWin(){
     }
     
     
-    delay(10000);
+    delay(60000);
     gameRestart();
   }
   
