@@ -16,9 +16,12 @@ const int dataPin = 45;
 const int latchPin = 47;
 
 const int keyBeepDelay = 50;
-
+bool coverOpened = false;
 const int openCoverPin = 8;
 Servo openServo;
+
+const int keyPin = 2;
+Servo keyServo;
 
 //char password[4] = "7775";
 char* password = "7775";
@@ -153,7 +156,7 @@ boolean isLost = false;
 boolean exploded = false;
 boolean winDone = false;
 int countDef = 0;
-int wrongWireExtraTime = 255;// 20 ; // in minutes
+int wrongWireExtraTime = 7;// 20 ; // in minutes
 
 /* Values to prevent the button from bouncing */
 int buttonState;             // the current reading from the input pin
@@ -191,6 +194,8 @@ SoftwareSerial mp3Serial(10, 9); // RX, TX
 //  001 start
 //  002 defused
 //  003 explosion
+// 004 loser music
+// 005 win music
 
 
 
@@ -215,6 +220,8 @@ void setup()
    pinMode(lightPin, OUTPUT);
    digitalWrite(lightPin, HIGH);
    closeCover();
+   closeKey();
+   
    
    counting = true;
   // init lift
@@ -309,6 +316,9 @@ void sendMp3Command(int8_t command, int16_t dat)
   }
 }
 
+void stopMp3(){
+  sendMp3Command(CMD_STOP, 0x00);//select the TF card  
+}
 
 void playGameStartSound(){
  playMp3Sound(word(0x01, 0x01));
@@ -322,6 +332,14 @@ void playDefusedSound(){
 
 void playExplosionSound(){
  playMp3Sound(word(0x01, 0x03));
+}
+
+void playLoserMusic(){
+ playMp3Sound(word(0x01, 0x04));
+}
+
+void playWinMusic(){
+ playMp3Sound(word(0x01, 0x05));
 }
 
 void playMp3Sound(int songCode){
@@ -340,6 +358,7 @@ void playGameStartSound(){
 */
 
 void closeCover(){
+   coverOpened = false;
    openServo.attach(openCoverPin);
    openServo.write(0);
    delay(1000);
@@ -347,7 +366,25 @@ void closeCover(){
 }
 
 void openCover(){
+   coverOpened = true;
    openServo.attach(openCoverPin);
+   openServo.write(180);
+   delay(1000);
+   openServo.detach();  
+}
+
+
+void closeKey(){
+   coverOpened = false;
+   openServo.attach(keyPin);
+   openServo.write(0);
+   delay(1000);
+   openServo.detach();  
+}
+
+void openKey(){
+   coverOpened = true;
+   openServo.attach(keyPin);
    openServo.write(180);
    delay(1000);
    openServo.detach();  
@@ -488,9 +525,9 @@ void updateButtonsBounces(){
 void checkWires(){
   
   
-//  if(!onUpActivated){
-//    return;
-//  }
+  if(!onUpActivated){
+    return;  
+  }
 
   updateBounces();
   
@@ -601,6 +638,9 @@ void doWin(){
 
 
   playDefusedSound();
+  openKey();
+  delay(5000);
+  playWinMusic();
 }
 
 void explode(){
@@ -637,13 +677,16 @@ void explode(){
   // let smoke go out for 3 sec
   playExplosionSound();
   movingUp = false;
+  openKey();
   delay(explosionTime);
+  playLoserMusic();
   //digitalWrite(explodePin, HIGH); 
 
 }
 
 
 void stopGame(){
+  stopMp3();
   gameAcitvated = false;
   isLost = false;
   isWin = false;
@@ -989,7 +1032,20 @@ void setLocked(){
   beep(keyBeepDelay);
   delay(100);
 
-  openCover();
+  if(!coverOpened){
+     openCover();
+     if(gameAcitvated){
+       onUpActivated = true;
+     }
+  }
+  else{
+     closeCover();
+     closeKey();
+
+     if(isWin || isLost){
+        stopGame();  
+     }
+  }
   delay (5000);
   //digitalWrite(relayBox, LOW);
   
