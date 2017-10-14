@@ -25,6 +25,8 @@ Servo keyServo;
 
 //char password[4] = "7775";
 char* password = "7775";
+char* backPassword = "6666";
+
 int password_len = 4;
 int position = 0;
 int guessed_digit = 0;
@@ -693,6 +695,10 @@ void stopGame(){
   preUpActivatedSeconds = 0;
   digitalWrite(doorPin, HIGH); 
   digitalWrite(winSoundPin, HIGH);
+
+  canStart = true;
+  exploded = false;
+  winDone = false;
 }
 /* --------------------------------------- BEGIN ------------------------------------*/
 void loop()
@@ -991,8 +997,10 @@ char key = keypad.getKey();
       Serial.print(key);
       //playTone();
       beep(keyBeepDelay);
-      
-      if (key == password[position]){
+
+      boolean isKeyGuesed = coverOpened ? key == backPassword[position] : key == password[position];
+      //if (key == password[position]){
+      if (isKeyGuesed){
         Serial.print("Pass:");
         Serial.print(password[position]);
         guessed_digit++;
@@ -1042,9 +1050,9 @@ void setLocked(){
      closeCover();
      closeKey();
 
-     if(isWin || isLost){
+     //if(isWin || isLost){
         stopGame();  
-     }
+     //}
   }
   delay (5000);
   //digitalWrite(relayBox, LOW);
