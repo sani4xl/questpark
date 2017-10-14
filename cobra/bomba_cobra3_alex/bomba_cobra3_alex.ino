@@ -144,7 +144,7 @@ Bounce activationBounce = Bounce();
                            {0, 0, 0, 0}};
                            */
 int defuseOptions[2][4] = {{2, 4, 1, 3},
-                           {0, 0, 0, 0}};
+{0, 0, 0, 0}};
 
 int defuseCounterThrashold = 10;                                                      
 long subDefuseTime = 0;
@@ -205,38 +205,38 @@ void setup()
 {
   Serial.begin(9600);
 
-   initMp3Player();
+  initMp3Player();
   
-   pinMode(explodePin, OUTPUT);
-   digitalWrite(explodePin, HIGH);
-   
-   pinMode(doorPin, OUTPUT); 
-   digitalWrite(doorPin, HIGH);
+  pinMode(explodePin, OUTPUT);
+  digitalWrite(explodePin, HIGH);
 
-   pinMode(winSoundPin, OUTPUT);
-   digitalWrite(winSoundPin, HIGH);
-   
-   
-   pinMode(activationPin, INPUT);
-   
-   pinMode(lightPin, OUTPUT);
-   digitalWrite(lightPin, HIGH);
-   closeCover();
-   closeKey();
-   
-   
-   counting = true;
+  pinMode(doorPin, OUTPUT); 
+  digitalWrite(doorPin, HIGH);
+
+  pinMode(winSoundPin, OUTPUT);
+  digitalWrite(winSoundPin, HIGH);
+
+
+  pinMode(activationPin, INPUT);
+
+  pinMode(lightPin, OUTPUT);
+  digitalWrite(lightPin, HIGH);
+  closeCover();
+  closeKey();
+
+
+  counting = true;
   // init lift
   
-   pinMode (SPEEDIN, OUTPUT); 
-   pinMode (MOTOR_A, OUTPUT);
-   pinMode (MOTOR_B, OUTPUT);
- 
-   pinMode(buttonUp, INPUT);
-   pinMode(buttonDown, INPUT);
-   pinMode(buttonStrartPin, INPUT);
+  pinMode (SPEEDIN, OUTPUT); 
+  pinMode (MOTOR_A, OUTPUT);
+  pinMode (MOTOR_B, OUTPUT);
 
-   startBtnBounce.attach(buttonStrartPin);
+  pinMode(buttonUp, INPUT);
+  pinMode(buttonDown, INPUT);
+  pinMode(buttonStrartPin, INPUT);
+
+  startBtnBounce.attach(buttonStrartPin);
    startBtnBounce.interval(10); //
 
    
@@ -254,33 +254,33 @@ void setup()
    
    pinMode(stopperDown, INPUT);
    pinMode(stopperUp, INPUT);
-  
+
   // init bomb
   //pinMode(buttonPin, INPUT);
-  pinMode(ledPin1, OUTPUT);
-  pinMode(ledPin2, OUTPUT);
-  pinMode(speakerPin, OUTPUT);
-  
-  analogWrite (speakerPin, 255);
-  
-  initCable();
-  // -------- SPI initialization
-  
-  
-  initScreens();
-  keypad.setDebounceTime(20);
-  pinMode(buzzer, OUTPUT);
-  analogWrite (buzzer, 255);
-  delay(50);
-  
-  pinMode(relayBox, OUTPUT);     
-  digitalWrite(relayBox, LOW);
-  pinMode(clockPin, OUTPUT);
-  pinMode(dataPin, OUTPUT);
-  pinMode(latchPin, OUTPUT);
-}
+   pinMode(ledPin1, OUTPUT);
+   pinMode(ledPin2, OUTPUT);
+   pinMode(speakerPin, OUTPUT);
 
-void initMp3Player(){
+   analogWrite (speakerPin, 255);
+
+   initCable();
+  // -------- SPI initialization
+
+
+   initScreens();
+   keypad.setDebounceTime(20);
+   pinMode(buzzer, OUTPUT);
+   analogWrite (buzzer, 255);
+   delay(50);
+
+   pinMode(relayBox, OUTPUT);     
+   digitalWrite(relayBox, LOW);
+   pinMode(clockPin, OUTPUT);
+   pinMode(dataPin, OUTPUT);
+   pinMode(latchPin, OUTPUT);
+ }
+
+ void initMp3Player(){
   //lastTimePlay = millis() / 1000;
   //currentSec = millis() / 1000;
   //pinMode(songs, INPUT_PULLUP);
@@ -360,36 +360,36 @@ void playGameStartSound(){
 */
 
 void closeCover(){
-   coverOpened = false;
-   openServo.attach(openCoverPin);
-   openServo.write(0);
-   delay(1000);
-   openServo.detach();  
+ coverOpened = false;
+ openServo.attach(openCoverPin);
+ openServo.write(0);
+ delay(1000);
+ openServo.detach();  
 }
 
 void openCover(){
-   coverOpened = true;
-   openServo.attach(openCoverPin);
-   openServo.write(180);
-   delay(1000);
-   openServo.detach();  
+ coverOpened = true;
+ openServo.attach(openCoverPin);
+ openServo.write(180);
+ delay(1000);
+ openServo.detach();  
 }
 
 
 void closeKey(){
-   coverOpened = false;
-   openServo.attach(keyPin);
-   openServo.write(0);
-   delay(1000);
-   openServo.detach();  
+ coverOpened = false;
+ openServo.attach(keyPin);
+ openServo.write(0);
+ delay(1000);
+ openServo.detach();  
 }
 
 void openKey(){
-   coverOpened = true;
-   openServo.attach(keyPin);
-   openServo.write(180);
-   delay(1000);
-   openServo.detach();  
+ coverOpened = true;
+ openServo.attach(keyPin);
+ openServo.write(180);
+ delay(1000);
+ openServo.detach();  
 }
 
 void initLCDKeys()
@@ -405,7 +405,7 @@ void initLCDKeys()
 
 
 void startGame(){
-   
+
   Serial.print("canStart:");
   Serial.println(canStart);
   
@@ -413,7 +413,7 @@ void startGame(){
     return;
   }
 
- 
+
   
   Serial.println("GO");
   canStart = false;
@@ -491,23 +491,23 @@ void initCable(){
 }
 
 Bounce getBounceByIndex(int index){
-    switch(index){
-      case 1:
-      return wireBounce1;
-      break;
+  switch(index){
+    case 1:
+    return wireBounce1;
+    break;
 
-      case 2:
-      return wireBounce2;
-      break;
+    case 2:
+    return wireBounce2;
+    break;
 
-      case 3:
-      return wireBounce3;
-      break;
+    case 3:
+    return wireBounce3;
+    break;
 
-      case 4:
-      return wireBounce4;
-      break;
-    }
+    case 4:
+    return wireBounce4;
+    break;
+  }
 }
 
 void updateBounces(){
@@ -525,8 +525,8 @@ void updateButtonsBounces(){
 }
 
 void checkWires(){
-  
-  
+
+
   if(!onUpActivated){
     return;  
   }
@@ -544,10 +544,7 @@ void checkWires(){
     //Serial.println(tmpBounce);
     //tmpBounce.update();
     int isWireOn = tmpBounce.read();
-    //Serial.print(isWireOn);
-    //Serial.println(defuseOptions[0][i]);
-    //int isWireOn = digitalRead(defuseOptions[0][i]);
-
+   
     // wire already cut
     if(defuseOptions[1][i]){
       isWireOn = false;
@@ -611,18 +608,18 @@ void checkWires(){
   }
   
   if(wrongCut){
-     subDefuseTime += wrongWireExtraTime;
-     timerRunDown();
+   subDefuseTime += wrongWireExtraTime;
+   timerRunDown();
      //return;
-  }  
-  
-  if(wireHasBeenCut){
-    return;
-  }
-  
-  if(wireCutIndex >= 4){
-    isBombDefused = true; 
-  }
+ }  
+
+ if(wireHasBeenCut){
+  return;
+}
+
+if(wireCutIndex >= 4){
+  isBombDefused = true; 
+}
 }
 
 void doWin(){
@@ -658,7 +655,7 @@ void explode(){
  //stopLiqMotor();
  //stopCdMotor();   
 
-    
+
   //digitalWrite(ssPin, LOW);  
   isLost = true;
   
@@ -670,7 +667,7 @@ void explode(){
     Serial.println("beep");
     beep(beepDelay - i * 7);
   }
-    
+
   //digitalWrite(explodePin, LOW); 
   
   //digitalWrite(doorPin, HIGH); 
@@ -715,57 +712,57 @@ void loop()
   }
   
   if(!gameAcitvated){
-     
-     return;
-   }
-   
+
+   return;
+ }
+
    //Serial.println(onUpActivated);
-   
-  if(isLost){
-    explode();
-    Serial.println("LOST");
-    
-  }
-  else if (!isWin){
+
+ if(isLost){
+  explode();
+  Serial.println("LOST");
+
+}
+else if (!isWin){
     // Проверка проводов
    //  Serial.println("GAME");
-    checkWires();
-    count();
-  } 
-  
-  if(isLost || isWin) {
+  checkWires();
+  count();
+} 
+
+if(isLost || isWin) {
     //Serial.println("lost or win");
     //digitalWrite(speakerPin, LOW);
-    
+
     //noTone(speakerPin);
-  }
+}
 }
 
 
 void count() {
-  
+
   //Serial.print(counting);
-  
+
   if (counting){
     unsigned long now = millis();
     int secondsPassed = (now-lastStartTime)/1000;
     if(onUpPreActivated && preUpActivatedSeconds <= 0){
-       preUpActivatedSeconds = secondsPassed;
+     preUpActivatedSeconds = secondsPassed;
        //onUpPreActivated = true;
-       
-       
-    }
-    
-    if(!onUpActivated && preUpActivatedSeconds > 0 && (secondsPassed - preUpActivatedSeconds) > 10 ){
-      
-      onUpActivated = true;
-    }
-    
-    secondsPassed += subDefuseTime * 60;
-    
-    
-    
-    int lastMinute = countdownOptions[countdownSetting];
+
+
+   }
+
+   if(!onUpActivated && preUpActivatedSeconds > 0 && (secondsPassed - preUpActivatedSeconds) > 10 ){
+
+    onUpActivated = true;
+  }
+
+  secondsPassed += subDefuseTime * 60;
+
+
+
+  int lastMinute = countdownOptions[countdownSetting];
     int lastSecond = lastMinute * 60; // ???
     
     int secondsLeft = lastSecond - secondsPassed;
@@ -776,7 +773,7 @@ void count() {
     
     //activationButtonState = digitalRead(activationPin);
     activationButtonState = activationBounce.rose();
-  
+
     
     if( ( secondsLeft < secondsLeftForLiftingUp || activationButtonState) && !bombActivated){// !liftedUp && notLiftedYet ){
       movingUp = true;
@@ -820,34 +817,34 @@ void count() {
     //Serial.print(" ");
     //Serial.println(secondsDisplay);
     
-   if(isBombDefused){
+    if(isBombDefused){
      isWin = true; 
      doWin();
-    }
-    else if(secondsLeft <= 0 ){
-      isLost = true;
-      Serial.println("LOST");
-      displayNumber("0");
-      
-      counting = false;
-      gameAcitvated = false;
-      
-      explode();
-    }
-    
+   }
+   else if(secondsLeft <= 0 ){
+    isLost = true;
+    Serial.println("LOST");
+    displayNumber("0");
+
+    counting = false;
+    gameAcitvated = false;
+
+    explode();
+  }
+
     /*
     if(secondsDisplay == 0 && minutesDisplay == 0) {
       counting = false;
       gameAcitvated = false;
     }*/
-    
+
   } //counting
 }// END count()
 
 
 
 void timerRunDown(){
-  
+
   int var = 0;
   int cnt = 0;  
   
@@ -869,76 +866,76 @@ void timerRunDown(){
 }
   //
 void displayNumber(String line){
-   
 
-   counter = line.toInt();
-   sprintf(tempString, "%4d", counter);
-   String timeStringToDispay = (String)tempString;
-   
+
+ counter = line.toInt();
+ sprintf(tempString, "%4d", counter);
+ String timeStringToDispay = (String)tempString;
+
    // outputting to bomb screen
-   dec(counter);
-   
-   if(liftedUp){
-     s7sSendStringSPI(timeStringToDispay);   
-   }
-   else{
+ dec(counter);
+
+ if(liftedUp){
+   s7sSendStringSPI(timeStringToDispay);   
+ }
+ else{
    //beep(50);
    // outputing to main screen
    //*
-     timeStringToDispay.toCharArray(mainScreenBuffer, 5);
-     for(int i = 0; i<4; i++){
-       mainTimeDisp[i]= mainScreenBuffer[i] - 48;
-     }
-  
-     tm1637.display(mainTimeDisp); 
+   timeStringToDispay.toCharArray(mainScreenBuffer, 5);
+   for(int i = 0; i<4; i++){
+     mainTimeDisp[i]= mainScreenBuffer[i] - 48;
    }
-  
-  //*/
-   
-  // leds 
-   if(bombActivated && onUpActivated){
-     led(counter);
-   }   
-  
+
+   tm1637.display(mainTimeDisp); 
  }
- 
+
+  //*/
+
+  // leds 
+ if(bombActivated && onUpActivated){
+   led(counter);
+ }   
+
+}
+
 void dec(int isEvenNumber){
-   if (isEvenNumber % 2 == 0) { 
-     
-     if(liftedUp){
-       setDecimalsSPI(0b00010000);
-     }
-     else{
-       tm1637.point(true);
-     }
- 
-   } else{ 
-     if(liftedUp){
-       setDecimalsSPI(0b00000000);
-     }
-     else{
-       tm1637.point(false);
-     }
+ if (isEvenNumber % 2 == 0) { 
+
+   if(liftedUp){
+     setDecimalsSPI(0b00010000);
    }
+   else{
+     tm1637.point(true);
+   }
+
+ } else{ 
+   if(liftedUp){
+     setDecimalsSPI(0b00000000);
+   }
+   else{
+     tm1637.point(false);
+   }
+ }
 }
 
 void led(int isEvenNumber){
   if (isEvenNumber % 2 == 0) { 
-     digitalWrite (ledPin1, HIGH);
-     digitalWrite (ledPin2, LOW);  
+   digitalWrite (ledPin1, HIGH);
+   digitalWrite (ledPin2, LOW);  
   //tone (speakerPin, 777);
-  } else{ 
-    digitalWrite (ledPin1, LOW);
-    digitalWrite (ledPin2, HIGH);
+ } else{ 
+  digitalWrite (ledPin1, LOW);
+  digitalWrite (ledPin2, HIGH);
   //digitalWrite(speakerPin, LOW);
    //noTone(speakerPin); 
- }
+}
 }
 /***************SPI LIB*********************/
 void s7sSendStringSPI(String toSend)
 {
   digitalWrite(ssPin, LOW);
- 
+
 
   for (int i=0; i<4; i++)
   {
@@ -980,12 +977,12 @@ void beep(unsigned char delayms){
   analogWrite (speakerPin, 255);
   delay(delayms);
   //digitalWrite(speakerPin, HIGH);
- 
+
   
 }
 
 void keyPass(){
-char key = keypad.getKey();
+  char key = keypad.getKey();
   initLCDKeys();
   //noTone(buzzer);
   delay(50);
@@ -994,8 +991,9 @@ char key = keypad.getKey();
     if (key == 'F')
     {
     } else
-      Serial.print(key);
+    Serial.print(key);
       //playTone();
+
       beep(keyBeepDelay);
 
       boolean isKeyGuesed = coverOpened ? key == backPassword[position] : key == password[position];
@@ -1017,46 +1015,50 @@ char key = keypad.getKey();
         } else {
           soundWrongSignal();
         }
+
     
-        position = 0;
-        guessed_digit = 0;
+    position = 0;
+    guessed_digit = 0;
         //
-      }
   }
+}
 
 }// END
-  
+
 void setLocked(){
  Serial.print("UnLocked!");
-  digitalWrite(relayBox, HIGH);
-  
-  delay(100);
-  beep(keyBeepDelay);
-  delay(100);
-  beep(keyBeepDelay);
-  delay(100);
-  beep(keyBeepDelay);
-  delay(100);
-  beep(keyBeepDelay);
-  delay(100);
+ digitalWrite(relayBox, HIGH);
 
-  if(!coverOpened){
-     openCover();
-     if(gameAcitvated){
-       onUpActivated = true;
-     }
-  }
-  else{
-     closeCover();
-     closeKey();
+ delay(100);
+ beep(keyBeepDelay);
+ delay(100);
+ beep(keyBeepDelay);
+ delay(100);
+ beep(keyBeepDelay);
+ delay(100);
+ beep(keyBeepDelay);
+ delay(100);
+
+ if(!coverOpened){
+   openCover();
+   if(gameAcitvated){
+     onUpActivated = true;
+   }
+ }
+ else{
+   closeCover();
+   closeKey();
+
 
      //if(isWin || isLost){
         stopGame();  
      //}
+
   }
-  delay (5000);
+}
+delay (5000);
   //digitalWrite(relayBox, LOW);
-  
+
 }
 
 
@@ -1068,27 +1070,19 @@ void soundWrongSignal(){
   delay (400);
 }
 
-/*
-void beep()
-{
-  analogWrite (buzzer, 0);
-  delay (30);
-  analogWrite (buzzer, 255);
-  delay(30);
-}
-*/
+
 
 //Beeps on key presses
 void playTone(){
   tone(buzzer, 150, 10);
-  }
+}
 
 void anturag(){
-    for (int number = 0; number < 256; number++) {
+  for (int number = 0; number < 256; number++) {
     Serial.println(number);
     digitalWrite(latchPin, LOW);
     shiftOut(dataPin, clockPin, MSBFIRST, number);
     digitalWrite(latchPin, HIGH);
     delay(500);
   }
-  }
+}
