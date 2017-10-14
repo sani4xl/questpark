@@ -1015,7 +1015,6 @@ void keyPass(){
         } else {
           soundWrongSignal();
         }
-
     
     position = 0;
     guessed_digit = 0;
@@ -1048,14 +1047,12 @@ void setLocked(){
  else{
    closeCover();
    closeKey();
-
-
      //if(isWin || isLost){
         stopGame();  
      //}
 
   }
-}
+
 delay (5000);
   //digitalWrite(relayBox, LOW);
 
