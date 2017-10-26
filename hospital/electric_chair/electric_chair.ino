@@ -1,10 +1,18 @@
 
 
+#include <Ultrasonic.h>
 //#include <SPI.h>
 #include <Bounce2.h>
 
 #define START_BUTTON_PIN 7
 
+
+#define TRIGGER_PIN  12
+#define ECHO_PIN     11
+
+Ultrasonic ultrasonic(TRIGGER_PIN, ECHO_PIN);
+const long headTriggerTrashold = 7;
+boolean readyToStart = false;
 
 // MP3
 static int8_t Send_buf[8] = {0} ;
@@ -50,8 +58,11 @@ void setup() {
  
 void loop() {
    // Get the updated value :
+  checkHeadUltrasonic();
+  
   debouncer.update();
-  int value = debouncer.read();
+  //int value = debouncer.read();
+  int value = debouncer.rose();
   
 
   // Turn on or off the LED as determined by the state :
@@ -59,9 +70,10 @@ void loop() {
     
     
   } 
-  else {
+  else if(readyToStart){
     //digitalWrite(LED_PIN, HIGH );
     if(!isFried){
+      Serial.println("frying");
       playSound();
       
     }
@@ -73,6 +85,8 @@ void loop() {
   
 
 }
+
+
 
 void initMp3Player(){
   lastTimePlay = millis() / 1000;
@@ -122,3 +136,22 @@ void sendCommand(int8_t command, int16_t dat)
     mp3Serial.write(Send_buf[i]) ;
   }
 }
+
+void checkHeadUltrasonic(){
+  float cmMsec, inMsec;
+  long microsec = ultrasonic.timing();
+
+  cmMsec = ultrasonic.convert(microsec, Ultrasonic::CM);
+  inMsec = ultrasonic.convert(microsec, Ultrasonic::IN);
+  //Serial.println(cmMsec);
+  if(cmMsec < headTriggerTrashold){
+    readyToStart = true;
+  }
+  else {
+    readyToStart = false;
+  }
+}
+
+
+
+
