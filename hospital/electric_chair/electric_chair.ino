@@ -1,11 +1,23 @@
 
 
+#include <Adafruit_NeoPixel.h>
+#ifdef __AVR__
+  #include <avr/power.h>
+#endif
+
+#define NUMPIXELS      4
+
 #include <Ultrasonic.h>
 //#include <SPI.h>
 #include <Bounce2.h>
 
 #define START_BUTTON_PIN 7
 
+
+#define HEAD_LED_PIN 10
+#define LED_THRASHOLD 400
+Adafruit_NeoPixel headPixels = Adafruit_NeoPixel(NUMPIXELS, HEAD_LED_PIN, NEO_GRB + NEO_KHZ800);
+boolean headLedTurned = false;
 
 #define TRIGGER_PIN  12
 #define ECHO_PIN     11
@@ -36,6 +48,7 @@ int currentTrack = 1;
 SoftwareSerial mp3Serial(4, 3); // RX, TX
 int lastTimePlay; // in sec
 int currentSec;
+int currentLedTime;
 
 Bounce debouncer = Bounce(); 
 boolean isFried = false;
@@ -51,9 +64,35 @@ void setup() {
   // After setting up the button, setup the Bounce instance :
   debouncer.attach(START_BUTTON_PIN);
   debouncer.interval(5); // interval in ms
+
+  headPixels.begin();
+  turnOffHeadLedLine();
   
   Serial.println("start chair");
   
+}
+
+void turnOffHeadLedLine(){
+   headPixels.clear();
+   for(int i=0;i<NUMPIXELS;i++){
+
+    // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+    headPixels.setPixelColor(i, headPixels.Color(0,0,0)); // Moderately bright green color.
+   }  
+   headPixels.show();
+
+}
+
+
+void turnOnHeadLedLine(){
+   headPixels.clear();
+   for(int i=0;i<NUMPIXELS;i++){
+
+    // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+    headPixels.setPixelColor(i, headPixels.Color(255,255,255)); // Moderately bright green color.
+   }  
+   headPixels.show();
+
 }
  
 void loop() {
@@ -76,10 +115,15 @@ void loop() {
       Serial.println("frying");
       playSound();
       
+      
     }
     isFried = true;
     //digitalWrite(LED_PIN, LOW );
     //Serial.println(value);
+  }
+
+  if(isFried){
+   playLed(); 
   }
 
   
@@ -108,6 +152,22 @@ void initMp3Player(){
   //sendCommand(0X0F, songCode);// играем трек 001 из папки 01
 }
 
+void playLed(){
+  
+  if(millis() - currentLedTime >= LED_THRASHOLD ){
+    currentLedTime = millis();
+    if(headLedTurned){
+      headLedTurned = false;
+      turnOffHeadLedLine();
+    }
+    else{
+      headLedTurned = true;
+      turnOnHeadLedLine();
+    }
+  
+  }
+  
+}
 
 void playSound(){
   
