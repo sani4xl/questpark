@@ -1,4 +1,5 @@
 
+#include <Servo.h>
 
 #include <Adafruit_NeoPixel.h>
 #ifdef __AVR__
@@ -13,9 +14,12 @@
 
 #define START_BUTTON_PIN 7
 
+const int keyPin = 9;
+Servo keyServo;
+
 
 #define HEAD_LED_PIN 10
-#define LED_THRASHOLD 400
+#define LED_THRASHOLD 100
 Adafruit_NeoPixel headPixels = Adafruit_NeoPixel(NUMPIXELS, HEAD_LED_PIN, NEO_GRB + NEO_KHZ800);
 boolean headLedTurned = false;
 
@@ -24,7 +28,7 @@ boolean headLedTurned = false;
 
 Ultrasonic ultrasonic(TRIGGER_PIN, ECHO_PIN);
 const long headTriggerTrashold = 7;
-boolean readyToStart = false;
+boolean headReady = false;
 
 // MP3
 static int8_t Send_buf[8] = {0} ;
@@ -49,9 +53,13 @@ SoftwareSerial mp3Serial(4, 3); // RX, TX
 int lastTimePlay; // in sec
 int currentSec;
 int currentLedTime;
+int startFryingTime;
+
+#define FRYING_THRASHOLD 10
 
 Bounce debouncer = Bounce(); 
 boolean isFried = false;
+boolean frying = false;
 
 void setup() { 
   Serial.begin(9600);
@@ -66,10 +74,37 @@ void setup() {
   debouncer.interval(5); // interval in ms
 
   headPixels.begin();
-  turnOffHeadLedLine();
   
+  stopFrying();
   Serial.println("start chair");
   
+}
+
+void stopFrying(){
+  turnOffHeadLedLine();
+  frying = false;
+  stopSound();
+  isFried = false; 
+}
+
+void dropKey(){
+ 
+ 
+ keyServo.attach(keyPin);
+ keyServo.write(90);
+ delay(1000);
+ keyServo.write(0);
+ delay(1000);
+ keyServo.write(90);
+ delay(1000);
+ keyServo.write(0);
+ delay(1000);
+ keyServo.write(90);
+ delay(1000);
+ keyServo.write(0);
+ delay(1000);
+ keyServo.detach();  
+
 }
 
 void turnOffHeadLedLine(){
@@ -102,19 +137,22 @@ void loop() {
   debouncer.update();
   //int value = debouncer.read();
   int value = debouncer.rose();
-  
+
+  if(!headReady){
+    if(isFried){
+      stopFrying();
+    }
+    isFried = false;
+    frying = false;
+  }
 
   // Turn on or off the LED as determined by the state :
-  if ( value == LOW ) {
-    
-    
-  } 
-  else if(readyToStart){
+  if ( value == HIGH  && headReady){
     //digitalWrite(LED_PIN, HIGH );
     if(!isFried){
       Serial.println("frying");
       playSound();
-      
+      startFryingTime = millis() / 1000;
       
     }
     isFried = true;
@@ -122,8 +160,22 @@ void loop() {
     //Serial.println(value);
   }
 
-  if(isFried){
+  if(isFried && headReady){
+    frying = (millis() / 1000 - startFryingTime)  < FRYING_THRASHOLD;
+    if(frying){
+      //playLed();
+    }
+    else{
+      isFried = false;
+      stopFrying();
+      dropKey();
+      
+    }
+  }
+
+  if(frying){
    playLed(); 
+   
   }
 
   
@@ -152,6 +204,10 @@ void initMp3Player(){
   //sendCommand(0X0F, songCode);// играем трек 001 из папки 01
 }
 
+void stopSound(){
+  sendCommand(CMD_STOP, 0x00);//select the TF card  
+}
+
 void playLed(){
   
   if(millis() - currentLedTime >= LED_THRASHOLD ){
@@ -159,10 +215,12 @@ void playLed(){
     if(headLedTurned){
       headLedTurned = false;
       turnOffHeadLedLine();
+      Serial.println("off");
     }
     else{
       headLedTurned = true;
       turnOnHeadLedLine();
+      Serial.println("on");
     }
   
   }
@@ -205,10 +263,10 @@ void checkHeadUltrasonic(){
   inMsec = ultrasonic.convert(microsec, Ultrasonic::IN);
   //Serial.println(cmMsec);
   if(cmMsec < headTriggerTrashold){
-    readyToStart = true;
+    headReady = true;
   }
   else {
-    readyToStart = false;
+    headReady = false;
   }
 }
 
