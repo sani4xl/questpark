@@ -19,7 +19,7 @@ Servo keyServo;
 
 
 #define HEAD_LED_PIN 10
-#define LED_THRASHOLD 100
+#define LED_THRASHOLD 200
 Adafruit_NeoPixel headPixels = Adafruit_NeoPixel(NUMPIXELS, HEAD_LED_PIN, NEO_GRB + NEO_KHZ800);
 boolean headLedTurned = false;
 
@@ -88,7 +88,7 @@ void stopFrying(){
 }
 
 void dropKey(){
- 
+ Serial.println("dropping key");
  
  keyServo.attach(keyPin);
  keyServo.write(90);
@@ -138,6 +138,7 @@ void loop() {
   //int value = debouncer.read();
   int value = debouncer.rose();
 
+  /*
   if(!headReady){
     if(isFried){
       stopFrying();
@@ -145,6 +146,7 @@ void loop() {
     isFried = false;
     frying = false;
   }
+  */
 
   // Turn on or off the LED as determined by the state :
   if ( value == HIGH  && headReady){
@@ -156,10 +158,12 @@ void loop() {
       
     }
     isFried = true;
+    frying = true;
     //digitalWrite(LED_PIN, LOW );
     //Serial.println(value);
   }
 
+  /*
   if(isFried && headReady){
     frying = (millis() / 1000 - startFryingTime)  < FRYING_THRASHOLD;
     if(frying){
@@ -172,10 +176,23 @@ void loop() {
       
     }
   }
-
+  
+  
   if(frying){
    playLed(); 
    
+  }
+  */
+  if(isFried){
+    frying = (millis() / 1000 - startFryingTime)  < FRYING_THRASHOLD;
+    if(frying){
+       playLed();
+    }
+    else{
+      isFried = false;
+      stopFrying();
+      dropKey();
+    }
   }
 
   
