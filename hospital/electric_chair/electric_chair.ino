@@ -27,7 +27,7 @@ boolean headLedTurned = false;
 #define ECHO_PIN     11
 
 Ultrasonic ultrasonic(TRIGGER_PIN, ECHO_PIN);
-const long headTriggerTrashold = 7;
+const long headTriggerTrashold = 10;
 boolean headReady = false;
 
 // MP3
@@ -148,6 +148,8 @@ void loop() {
   }
   */
 
+  //Serial.print("ready ");
+  //Serial.println(headReady);
   // Turn on or off the LED as determined by the state :
   if ( value == HIGH  && headReady){
     //digitalWrite(LED_PIN, HIGH );
