@@ -544,7 +544,7 @@ void loop() {
          // 
           ledBot1.Update();
           
-          randNumber = random(3,7);
+          randNumber = random(36,56);
           //clearDisplaySPI(); 
           shotBot(randNumber, firstBot);
 
@@ -566,7 +566,7 @@ void loop() {
           
           ledBot2.Update();
           
-          randNumber = random(4,8);
+          randNumber = random(45,55);
           //clearDisplaySPI();
           shotBot(randNumber, secondBot);
           
