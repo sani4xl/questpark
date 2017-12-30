@@ -27,7 +27,7 @@ boolean headLedTurned = false;
 #define ECHO_PIN     11
 
 Ultrasonic ultrasonic(TRIGGER_PIN, ECHO_PIN);
-const long headTriggerTrashold = 10;
+const long headTriggerTrashold = 18;
 boolean headReady = false;
 
 // MP3
