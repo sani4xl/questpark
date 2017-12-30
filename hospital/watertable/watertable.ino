@@ -8,7 +8,7 @@ int totalLiquid = 0;
 #define LED_PIN 13
 
 #define LIQUID_REQUIRED 50
-#define LIQUID_LEVEL_REQUIRED 2.1
+#define LIQUID_LEVEL_REQUIRED 1.5
 
 void rpm () //This is the function that the interupt calls 
 { 
@@ -22,7 +22,7 @@ void setup() //
 //pinMode(hallsensor, INPUT); //initializes digital pin 2 as an input
 Serial.begin(9600); //This is the setup function where the serial port is 
 pinMode(RELAY_PIN, OUTPUT);
-pinMode(LED_PIN, OUTPUT);
+//pinMode(LED_PIN, OUTPUT);
 closeLock();
 //initialised,
 //attachInterrupt(0, rpm, RISING); //and the interrupt is attached
@@ -83,11 +83,11 @@ if(isDoorOpened && (millis()/1000 - starOpenTimeRange > OPENING_TIME_RANGE )){
 void closeLock(){
   Serial.println("close lock");
   digitalWrite(RELAY_PIN, LOW);
-  digitalWrite(LED_PIN, LOW);
+  //digitalWrite(LED_PIN, LOW);
 }
 
 void openLock(){
   digitalWrite(RELAY_PIN, HIGH);
-  digitalWrite(LED_PIN, HIGH);
+  //digitalWrite(LED_PIN, HIGH);
 }
 
