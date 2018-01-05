@@ -96,6 +96,7 @@ void loop() {
     else{
       playEvacuation();
       delay(delayBeforeRoofUnlock);
+      playMonster();
       unlockRoof();
       delay(delayBeforeFinalMonsters);
       turnLightOff();
@@ -199,20 +200,40 @@ void initMp3Player(){
 
 void playAccessRequest(){
   
-  sendMp3Command(0X0F, 0X0101);
+  sendMp3Command(0X0F, 0X0102);
   delay(1500);
 }
 
 void playAccessGranted(){
   
+  sendMp3Command(0X0F, 0X0101 );// играем трек 001 из папки 01
+  delay(1500);
+  
+}
+
+void playDoorClose(){
+  
   sendMp3Command(0X0F, 0X0103 );// играем трек 001 из папки 01
-  delay(2000);
+  delay(1500);
   
 }
 
 void playEvacuation(){
  
-  sendMp3Command(0X0F, 0X0102);// играем трек 001 из папки 01
+  sendMp3Command(0X0F, 0X0104);// играем трек 001 из папки 01
+ 
+}
+
+void playMonster(){
+ 
+  sendMp3Command(0X0F, 0X0105);// играем трек 001 из папки 01
+ 
+}
+
+
+void playLater(){
+ 
+  sendMp3Command(0X0F, 0X0106);// играем трек 001 из папки 01
  
 }
 
