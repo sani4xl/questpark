@@ -10,6 +10,7 @@
 #define AT_PIN A1
 
 const int RELE_PIN = 3;
+const int VOLTAGE_TRASHOLD = 1.2;
 
 void setup()
 {
@@ -29,20 +30,24 @@ void loop()
   float current = at_read * (5.0 / 1024.0);
   float watts = voltage * current;
 
-  if(voltage > 0){
+  if(voltage > VOLTAGE_TRASHOLD){
     voltageSum += voltage;
+    
     Serial.println(voltageSum);
-    if(voltageSum >= 0.5){
+    if(voltageSum >= VOLTAGE_TRASHOLD){
+      Serial.println("HAHAHAH");
       digitalWrite(RELE_PIN, HIGH);
     }
   }
   else{
     voltageSum = 0;
-    digitalWrite(RELE_PIN, LOW);
+    //digitalWrite(RELE_PIN, LOW);
   }
-  
-  //Serial.print("Volts: "); 
-  //Serial.println(voltage);
+
+  if(voltage > 0){
+    Serial.print("Volts: "); 
+    Serial.println(voltage);
+  }
   //Serial.print("\tAmps: ");
   //Serial.print(current,3);
   //Serial.print("\tWatts: ");

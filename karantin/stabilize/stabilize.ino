@@ -76,8 +76,7 @@ void setup() {
   pinMode(startButtonPin, INPUT);
   startBouncer.attach(startButtonPin);
   startBouncer.interval(5);
-  
-
+ 
   volcanoPixel.begin();
   volcanoPixel.show();
   //*/
@@ -106,6 +105,7 @@ void setup() {
 }
 
 void gameRestart(){
+  gameStart = false;
   lcd.backlight();
   lcd.clear();
   lcd.setCursor(0,0);
@@ -113,6 +113,7 @@ void gameRestart(){
   lcd.print("LOCKED");
  
   turnOnVolcano();
+  //winOFFAllPixel();
 
   reinitStrips();
 }
@@ -122,7 +123,7 @@ void reinitStrips(){
   for(int i = 0; i < ledStripsCount; i++){
     ledStripActive[i] = true;
     ledStripIndex[i] = 0;
-    ledStripGreenPins[i] = random(1, NUMPIXELS);
+    ledStripGreenPins[i] = random(3, NUMPIXELS);
   }
 }
 
@@ -166,14 +167,12 @@ void lightPixels(Adafruit_NeoPixel &firstPixel, int ledIndex, int greenIndex){
    for(int j=0;j<NUMPIXELS;j++){
     //if(j <= ledIndex ){
     if(j == ledIndex ){
-      
       firstPixel.setPixelColor(j, greenIndex == j ?  firstPixel.Color(0,255,0) :  firstPixel.Color(255,0,0) ); // Moderately bright green color.
     }
     else{
       firstPixel.setPixelColor(j, firstPixel.Color(0,0,0)); // Moderately bright green color.
     }
    }
-    
    firstPixel.show(); 
    //delay(100);
 }
@@ -189,20 +188,33 @@ void turnOffVolcano(){
   volcanoPixel.setPixelColor(0, volcanoPixel.Color(0,0,0)); // Moderately bright green color.
   volcanoPixel.show();
 }
+void winOFFAllPixel(){
+   for(int j=0;j<ledStripsCount;j++){
+      ledStrips[j].setPixelColor(0, ledStrips[j].Color(0,0,0));
+      ledStrips[j].show();
+    }
+  
+  }
+void winActivetAllPixel(){
+  
+   for(int j=0;j<ledStripsCount;j++){
+      ledStrips[j].setPixelColor(0, ledStrips[j].Color(0,255,0));
+      ledStrips[j].show();
+    }
+          
+     volcanoPixel.setPixelColor(0, volcanoPixel.Color(0,255,0)); // Moderately bright green color.
+     volcanoPixel.show();
+  }
 
 void renderPixels(){
-  
   int currentMills = millis();
   if(currentMills - ledLastTime < ledStepTime){
     return;
   }
-
   ledLastTime = currentMills;
 
-  
-
   for(int i =0 ; i< ledStripsCount; i++){
-
+    // если (кнопка нажата)TRUE 
     if(!ledStripActive[i]){
       continue;
     }
@@ -221,7 +233,7 @@ void renderPixels(){
     lightPixels(ledStrips[i], ledIndex, greenIndex);
 
     
-  }
+  } // end for
 
   checkForWin();
 
@@ -244,8 +256,6 @@ void renderPixels(){
     }
     reinitStrips();
   }
-  
-  
 }
 
 void colorifyStrips(uint8_t r, uint8_t g, uint8_t b){
@@ -258,19 +268,22 @@ void colorifyStrips(uint8_t r, uint8_t g, uint8_t b){
 void checkForWin(){
   int sum = 0;
   for(int i = 0; i < ledStripsCount; i++){
-    if(ledStripActive[i] ){
+    if(ledStripActive[i]){
       continue;
     }
 
     if(ledStripIndex[i] == ledStripGreenPins[i]){
       sum ++;
+      Serial.print("sum");
+      Serial.println(sum);
     }
     
   }
 
   if(sum >= ledStripsCount){
      
-    turnOffVolcano();
+    //turnOffVolcano();
+    
     renderWinMsg();
     isWin = true;
     for(int i =0; i< 5; i++){
@@ -279,11 +292,13 @@ void checkForWin(){
       colorifyStrips(0,0,0);
       delay(200);
     }
-
+    winActivetAllPixel();
+    
     digitalWrite(relePin, HIGH);
     
     
-    delay(60000);
+    delay(20000);
+    colorifyStrips(0,0,0);
     gameRestart();
   }
   
@@ -302,10 +317,11 @@ void renderWinMsg(){
 
 
 void checkButtons(){
-    startBouncer.update();
-    if(startBouncer.rose()){
-      gameStart = true;  
-      Serial.println("ggg");
+   startBouncer.update();
+   //Serial.print(startBouncer.rose());
+   if(startBouncer.rose()){
+    gameStart = true;  
+     // Serial.println("ggg");
     }
     
     for(int i =0 ; i< ledStripsCount; i++){
@@ -313,9 +329,10 @@ void checkButtons(){
        bouncers[i].update();
 
        if ( bouncers[i].rose() ) {
+       // Serial.println(ledStripActive[i]);
         ledStripActive[i] = !ledStripActive[i];
        }
-    }
+    } // end for
   
 }
 
@@ -330,8 +347,6 @@ void loop() {
     return;
   }
 
-  
-  
   renderPixels();
 
    //int value = debouncer.read();

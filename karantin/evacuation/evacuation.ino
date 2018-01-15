@@ -21,9 +21,11 @@ SoftwareSerial mp3Serial(3, 4); // RX, TX
 
 const int buttonPin = 2;
 Bounce buttonBounce = Bounce(); 
+Bounce doorBounce = Bounce(); 
 
 const int lightRelePin = 31;
 const int lockRelePin = 33;
+const int doorPin = 35;
 
 constexpr uint8_t RST_PIN = 8;     // Configurable, see typical pin layout above
 constexpr uint8_t SS_PIN = 9;     // Configurable, see typical pin layout above
@@ -49,6 +51,11 @@ void setup() {
    pinMode(buttonPin, INPUT);
    buttonBounce.attach(buttonPin);
    buttonBounce.interval(10); 
+
+   pinMode(doorPin, INPUT);
+   doorBounce.attach(doorPin);
+   doorBounce.interval(10);
+   
    Serial.println("start program");
 
    pinMode(lightRelePin, OUTPUT);
@@ -87,6 +94,7 @@ void unlockRoof(){
 void loop() {
   // put your main code here, to run repeatedly:
   buttonBounce.update();
+  doorBounce.update();
   if(buttonBounce.rose()){
     Serial.println("start evacuation button pressed");
     if(!accessGranted){
@@ -96,7 +104,6 @@ void loop() {
     else{
       playEvacuation();
       delay(delayBeforeRoofUnlock);
-      playMonster();
       unlockRoof();
       delay(delayBeforeFinalMonsters);
       turnLightOff();
@@ -200,40 +207,20 @@ void initMp3Player(){
 
 void playAccessRequest(){
   
-  sendMp3Command(0X0F, 0X0102);
+  sendMp3Command(0X0F, 0X0101);
   delay(1500);
 }
 
 void playAccessGranted(){
   
-  sendMp3Command(0X0F, 0X0101 );// играем трек 001 из папки 01
-  delay(1500);
-  
-}
-
-void playDoorClose(){
-  
   sendMp3Command(0X0F, 0X0103 );// играем трек 001 из папки 01
-  delay(1500);
+  delay(2000);
   
 }
 
 void playEvacuation(){
  
-  sendMp3Command(0X0F, 0X0104);// играем трек 001 из папки 01
- 
-}
-
-void playMonster(){
- 
-  sendMp3Command(0X0F, 0X0105);// играем трек 001 из папки 01
- 
-}
-
-
-void playLater(){
- 
-  sendMp3Command(0X0F, 0X0106);// играем трек 001 из папки 01
+  sendMp3Command(0X0F, 0X0102);// играем трек 001 из папки 01
  
 }
 
