@@ -12,13 +12,13 @@
 //#include <SPI.h>
 #include <Bounce2.h>
 
-#define START_BUTTON_PIN 7
+#define START_BUTTON_PIN 8 //7 old
 
 const int keyPin = 9;
 Servo keyServo;
 
 
-#define HEAD_LED_PIN 10
+#define HEAD_LED_PIN 6//10 old
 #define LED_THRASHOLD 200
 Adafruit_NeoPixel headPixels = Adafruit_NeoPixel(NUMPIXELS, HEAD_LED_PIN, NEO_GRB + NEO_KHZ800);
 boolean headLedTurned = false;
@@ -35,6 +35,7 @@ static int8_t Send_buf[8] = {0} ;
 
 const int totalTracks = 1;
 int currentTrack = 1;
+int buttonState = 0;
 
 #define CMD_PLAY_W_INDEX 0X03
 #define CMD_SET_VOLUME 0X06
@@ -56,7 +57,6 @@ int currentLedTime;
 int startFryingTime;
 
 #define FRYING_THRASHOLD 10
-
 Bounce debouncer = Bounce(); 
 boolean isFried = false;
 boolean frying = false;
@@ -64,7 +64,7 @@ boolean frying = false;
 void setup() { 
   Serial.begin(9600);
   //SPI.begin(); // Init SPI bus
- 
+
   initMp3Player();
 
   pinMode(START_BUTTON_PIN,INPUT);//INPUT_PULLUP);
@@ -131,13 +131,21 @@ void turnOnHeadLedLine(){
 }
  
 void loop() {
+  buttonState = digitalRead(START_BUTTON_PIN);
+  if (buttonState == HIGH) {
+    // turn LED on:
+    Serial.println(buttonState);
+  } else {
+    // turn LED off:
+   Serial.println(buttonState);
+  }
    // Get the updated value :
   checkHeadUltrasonic();
   
   debouncer.update();
   //int value = debouncer.read();
   int value = debouncer.rose();
-
+  
   /*
   if(!headReady){
     if(isFried){
@@ -148,10 +156,16 @@ void loop() {
   }
   */
 
-  //Serial.print("ready ");
-  //Serial.println(headReady);
+  Serial.print("ready:");
+  Serial.print(headReady);
+  Serial.print("  |  ");
+  Serial.print("value:");
+  Serial.println(value);
+  Serial.println(" ");
+  
   // Turn on or off the LED as determined by the state :
-  if ( value == HIGH  && headReady){
+  // if ( value == HIGH  && headReady){
+  if ( buttonState == HIGH  && headReady){
     //digitalWrite(LED_PIN, HIGH );
     if(!isFried){
       Serial.println("frying");
@@ -280,7 +294,7 @@ void checkHeadUltrasonic(){
 
   cmMsec = ultrasonic.convert(microsec, Ultrasonic::CM);
   inMsec = ultrasonic.convert(microsec, Ultrasonic::IN);
-  //Serial.println(cmMsec);
+  Serial.println(cmMsec);
   if(cmMsec < headTriggerTrashold){
     headReady = true;
   }
