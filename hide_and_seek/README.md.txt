@@ -22,6 +22,6 @@ Folder structure:
 
 if <pressed START> - Short sound 2 sec. - Cyclic music folder 02 - After 2 min. Short sound 2 sec. - Cyclic music folder 04 - Short sound 2 sec. - FInished
 
-if <pressed RESET> - time and sound pause - set pressed RESET
+if <pressed RESET> - reset time and sound - set pressed RESET
 
 if <NOT press START AND pressed MODE> - time setting [5 10 15 20 25 30] - set pressed START
