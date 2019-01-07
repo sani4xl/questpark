@@ -83,8 +83,8 @@ void loop() {
   }
   Serial.println("Card UID: ");
   Serial.println(uidDec); // Выводим UID метки в консоль.
-  
-  if (uidDec == 444860938) // Сравниваем Uid метки, ЕСЛИ он равен заданому ТО реле вкл.
+
+  if ((uidDec == 444860938) || (uidDec == 3698081641) || (uidDec == 3603377946)) // Сравниваем Uid метки, ЕСЛИ он равен заданому ТО реле вкл.
   {
     digitalWrite(relay,LOW);
     brightness_1 = 0;
@@ -94,7 +94,7 @@ void loop() {
     analogWrite(LED_5, brightness_2);
     analogWrite(LED_6, brightness_3);
      
-    delay(3000); // пауза 3 сек и реле выкл.
+    delay(10000); // пауза 3 сек и реле выкл.
     digitalWrite(relay,HIGH);
   }
 }
