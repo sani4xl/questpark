@@ -1,0 +1,37 @@
+
+#warning-message {
+    
+  display: none;
+  color:#000;
+  position: absolute;
+  left:0;
+  top:30%;
+  width:100%;
+  text-align: center;
+  padding: 20px;
+  font-size: 20pt;
+  font-weight: bold;
+  line-height: 1.5em;
+}
+
+
+
+@media only screen and (orientation:landscape) {
+  #wrapper {
+      display: none;
+  }
+  #warning-message {
+      display: block;
+      color: #fff;
+  }
+
+  body {
+      background:#000;
+  }
+}
+
+@media only screen and (orientation:portrait) {
+  #warning-message {
+      display: none;
+  }
+}
