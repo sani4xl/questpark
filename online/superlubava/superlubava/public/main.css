@@ -159,3 +159,9 @@ body {
     background-size: cover;
     background-position: center top;
 }
+
+#menu-grid  {
+    background: url(art/space2.jpg) no-repeat;
+    background-size: cover;
+    background-position: center top;
+}

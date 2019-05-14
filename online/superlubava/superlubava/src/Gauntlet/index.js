@@ -54,6 +54,9 @@ class Gauntlet extends Component {
     renderSnap() {
         if (!this.state.snapped) return;
         return <div>
+            <div id="winner-message">
+                <strong>Поздоровляємо! <br /> Ви врятували всесвіт!</strong>
+            </div>
             <img src={Snap} id="snap" alt="Snap" />
         </div>
     }
@@ -142,7 +145,7 @@ class Gauntlet extends Component {
     }
 
     canSnap() {
-        return this.gemsLeft() === 0;
+        return !this.state.snapped && this.gemsLeft() === 0;
     }
 
     gemsLeft() {
@@ -163,8 +166,7 @@ class Gauntlet extends Component {
 
     renderTop() {
         if (!this.state.checked) return <div>Завантаження...</div>;
-        if (this.state.snapped) return;
-        return this.canSnap() ? this.renderClick() : this.renderRemain();
+        return this.renderRemain();
     }
 
     renderClick() {
@@ -174,13 +176,15 @@ class Gauntlet extends Component {
     }
 
     renderRemain() {
-        return <div id="remaining">
+        return <div><div id="remaining">
             <div>
-                <Link to='/'>← На головну</Link>
+                <Link to='/' className="back-link">← На головну</Link>
             </div>
-            <div>
-                Каменів залишилось: <strong>{this.gemsLeft()}</strong>
+            <div id="left-stones">
+                Каменів залишилось: {this.gemsLeft()}
             </div>
+        </div>
+        {this.canSnap() ? this.renderClick() : null}
         </div>;
     }
 

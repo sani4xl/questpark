@@ -1,0 +1,51 @@
+#organizers {
+    display: grid;
+    grid-template-areas: 
+    "area1 area1"
+    "area2 area3";
+    text-align: center;
+    font-size: 18px;
+    color:#fff;
+    line-height: 1.2em;
+}
+
+#organizers a { color:#fff; text-decoration: none;}
+
+#organizers > div:nth-child(1) {
+    grid-area: area1;
+    margin:30px 0 20px;
+    text-transform: uppercase;
+
+}
+
+#organizers > div:nth-child(2) {
+    grid-area: area2;
+    padding:0 15px;
+}
+
+#organizers > div:nth-child(3) {
+    grid-area: area3;
+    padding:0 15px;
+}
+
+#menu-grid {
+    text-align: center;
+    padding:20px;
+    min-height: 100%;
+    position: absolute;
+    width: 100%;
+}
+
+#menu-grid #settings-img {
+    width:70px;
+    margin-top:0;
+}
+
+#menu-grid .button{ width: 100%; padding: 10px 15px; }
+
+#menu-grid > div { margin-bottom:40px;}
+
+#reset-btn {
+    box-shadow: 0 0 20px 0px #f00;
+}
+

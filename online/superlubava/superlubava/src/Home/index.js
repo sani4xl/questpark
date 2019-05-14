@@ -12,6 +12,7 @@ import RealityGemImg from './../art/reality_gem.png';
 import PowerGemImg from './../art/power_gem.png';
 import SpaceGemImg from './../art/space_gem.png';
 import MindGemImg from './../art/mind_gem.png';
+import IronMan from './../art/iron-man.svg';
 
 import './index.css';
 
@@ -45,6 +46,8 @@ class Home extends Component {
             alert("Будь ласка введіть код або шифр");
         }
 
+        this.setState({ loading: true });
+
         axios.post(PROCESS_URL, {
             teamName: localStorage.getItem('teamName'),
             teamId: localStorage.getItem('teamId'),
@@ -52,19 +55,38 @@ class Home extends Component {
             code: code
         })
         .then(res => {
+            this.setState({ loading: false });
             if (res.data) {
                 if (res.data.found_gem) {
                     this.setState({
-                        foundGem: GEMS[res.data.found_gem]
+                        foundGem: GEMS[res.data.found_gem],
+                        loading: false,
                     });
                     this.hideFoundGemTimeout = setTimeout(() => {
                         this.hideFoundGem();
                     }, HIDE_GEM_TIMEOUT);
+                    return;
                 }
             }
+            this.showWrongAnswer();
+            
+        })
+        .catch(() => {
+            this.showWrongAnswer();
         });
 
         return false;
+    }
+
+    showWrongAnswer() {
+        this.setState({wrong: true, loading: false, wrongLineClass: null });
+        setTimeout(() => {
+            this.setState({wrongLineClass: 'shrink'});
+        }, 100);
+
+        setTimeout(() => {
+            this.setState({wrong: false});
+        }, 2000);
     }
 
     hideFoundGem() {
@@ -115,7 +137,7 @@ class Home extends Component {
             <div>
                 <input placeholder="Назва команди" name="teamName" />
             </div>
-            <button id="start-button" className="button">Зареєструватись та почати</button>
+            <button id="start-button" className="button">Зареєструватись</button>
         </form>;
     }
 
@@ -133,7 +155,7 @@ class Home extends Component {
     }
 
     renderCheckForm() {
-        if (this.state.foundGem) return;
+        if (this.state.foundGem || this.state.loading || this.state.wrong) return;
         return <div>
             <div id="check-text">
                 Тільки секретні шифри та коди відкриють камені безкінечності...
@@ -144,6 +166,19 @@ class Home extends Component {
             </div>
             <button id="check-button" className="button">Перевірити</button>
         </form>
+        </div>;
+    }
+
+    renderLoading() {
+        if  (!this.state.loading) return;
+        return <div className="loader">Завантаження...</div>
+    }
+
+    renderWrongAnswer() {
+        if  (!this.state.wrong) return;
+        return <div id="wrong-answer">
+            <div>Невдала спроба</div>
+            <div id="wrong-line" className={this.state.wrongLineClass}></div>
         </div>;
     }
 
@@ -162,6 +197,8 @@ class Home extends Component {
             </div>
 
             {this.renderFoundGem()}
+            {this.renderWrongAnswer()}
+            {this.renderLoading()}
             {this.renderCheckForm()}
         </div>
     }
@@ -174,6 +211,11 @@ class Home extends Component {
                         <a href="http://lubava.ua" target="_blank">
                             <img src={LubavaLogo} alt="Lubava" className="qp-logo" />
                         </a>
+                    </div>
+                    <div>
+                        <Link to='/menu'>
+                            <img src={IronMan} alt="Settings" className="with-anim" id="settings-img" />
+                        </Link>
                     </div>
                     <div>
                         <a href="https://questpark.com.ua" target="_blank">

@@ -15,11 +15,34 @@
 
 #home-header {
     display: grid;
-    grid-template-columns: auto auto; 
+    grid-template-columns: auto auto auto; 
     padding: 10px;
 }
 
+#home-header > div:nth-child(2) {text-align: center;}
 #home-header > div:last-child { text-align: right;}
+
+#settings-img { width: 50px; border-radius:50%; 
+  
+  padding:5px;
+  margin-top:10px;
+  
+}
+
+#settings-img.with-anim {box-shadow: 0 0 10px 0px #fff; animation: whitepulse 4s ease-out infinite;}
+
+
+@-webkit-keyframes whitepulse {
+    0%   { box-shadow:0 0 10px 0px #fff; }
+    50%  { box-shadow: 0 0 1px 0px #fff; }
+    100% { box-shadow: 0 0 10px 0px #fff; }
+  }
+  
+  @keyframes whitepulse {
+    0%   { box-shadow:0 0 10px 0px #fff; }
+    50%  { box-shadow: 0 0 1px 0px #fff; }
+    100% { box-shadow: 0 0 10px 0px #fff; }
+  }
 
 .qp-logo {
     max-height: 80px;
@@ -29,6 +52,22 @@
 #small-gauntlet { width:80px;
     animation: pulsate 1.5s ease-out infinite;
     border-radius: 50%;
+}
+
+#wrong-answer { margin-top:40px; text-align: center; }
+
+#wrong-line {
+    display: inline-block;
+    width:100%;
+    transition: all 2s ease-out;
+    background: #fff;
+    height: 5px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px 1px #0f0;
+}
+
+#wrong-line.shrink {
+    width: 0;
 }
 
 #intro-text {
@@ -87,3 +126,63 @@
 
 #found-gem { max-height: 100px; margin-top:20px;}
 
+
+.loader,
+.loader:before,
+.loader:after {
+  background: #ffffff;
+  -webkit-animation: load1 1s infinite ease-in-out;
+  animation: load1 1s infinite ease-in-out;
+  width: 1em;
+  height: 4em;
+}
+.loader {
+  color: #ffffff;
+  text-indent: -9999em;
+  margin: 88px auto;
+  position: relative;
+  font-size: 11px;
+  -webkit-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-animation-delay: -0.16s;
+  animation-delay: -0.16s;
+}
+.loader:before,
+.loader:after {
+  position: absolute;
+  top: 0;
+  content: '';
+}
+.loader:before {
+  left: -1.5em;
+  -webkit-animation-delay: -0.32s;
+  animation-delay: -0.32s;
+}
+.loader:after {
+  left: 1.5em;
+}
+@-webkit-keyframes load1 {
+  0%,
+  80%,
+  100% {
+    box-shadow: 0 0;
+    height: 4em;
+  }
+  40% {
+    box-shadow: 0 -2em;
+    height: 5em;
+  }
+}
+@keyframes load1 {
+  0%,
+  80%,
+  100% {
+    box-shadow: 0 0;
+    height: 4em;
+  }
+  40% {
+    box-shadow: 0 -2em;
+    height: 5em;
+  }
+}
