@@ -1,3 +1,33 @@
+.button {
+  color:#fff;
+  background:none;
+  text-shadow: 0 0 20px rgba(255, 255, 0, 1);
+  box-shadow: 0 0 20px 0px rgba(0, 255, 255, 0.9);
+}
+
+@-webkit-keyframes pulsate {
+  0%   { box-shadow:0 0 20px 0px rgba(0, 255, 255, 0.9); }
+  50%  { box-shadow: 0 0 5px 0px rgba(0, 255, 255, 0.9); }
+  100% { box-shadow: 0 0 20px 0px rgba(0, 255, 255, 0.9); }
+}
+
+@keyframes pulsate {
+  0%   { box-shadow:0 0 20px 0px rgba(0, 255, 255, 0.9); }
+  50%  { box-shadow: 0 0 5px 0px rgba(0, 255, 255, 0.9); }
+  100% { box-shadow: 0 0 20px 0px rgba(0, 255, 255, 0.9); }
+}
+
+@-webkit-keyframes redpulsate {
+  0%   { box-shadow:0 0 15px 0px #f00; }
+  50%  { box-shadow: 0 0 1px 0px #f00; }
+  100% { box-shadow: 0 0 15px 0px #f00; }
+}
+
+@keyframes redpulsate {
+  0%   { box-shadow:0 0 15px 0px #f00; }
+  50%  { box-shadow: 0 0 1px 0px #f00; }
+  100% { box-shadow: 0 0 15px 0px #f00; }
+}
 
 #warning-message {
     
@@ -14,10 +44,13 @@
   line-height: 1.5em;
 }
 
+#warning-message {
+  display: none;
+}
 
-
+/*
 @media only screen and (orientation:landscape) {
-  #wrapper {
+  #root {
       display: none;
   }
   #warning-message {
@@ -35,3 +68,4 @@
       display: none;
   }
 }
+*/

@@ -13,24 +13,30 @@ import MindGemImg from './../art/mind_gem.png';
 import Snap from './../art/snap.png';
 import './index.css';
 
+const PROCESS_URL = `https://www.questpark.com.ua/game/lubava/backend/process.php`;
+
+const STONES_AMOUNT = 6;
 class Gauntlet extends Component {
     constructor() {
         super();
         this.state = {
-            snapped: false
+            snapped: false,
+            checked: false
         };
         this.onImgLoad = this.onImgLoad.bind(this);
     }
 
     componentDidMount() {
-        axios.post(`https://questpark.com.ua/game/superlubava/backend/process.php`, {
-            teamName: "hello",
+        axios.post(PROCESS_URL, {
+            teamName: localStorage.getItem('teamName'),
+            teamId: localStorage.getItem('teamId'),
+            action: 'check',
         })
-        .then(res => {
-            if (res.data) {
-                this.setState({gems: res.data.gems})
-            }
-        })  
+            .then(res => {
+                if (res.data) {
+                    this.setState({ gems: res.data.gems, checked: true })
+                }
+            });
     }
 
     onImgLoad({ target: img }) {
@@ -80,13 +86,13 @@ class Gauntlet extends Component {
 
     renderRealityGem() {
         if (this.isNoGem('reality')) return;
-        const scale = this.state.gloveSize ? this.state.gloveSize.scale : 0; 
+        const scale = this.state.gloveSize ? this.state.gloveSize.scale : 0;
         const realityGemStyle = {
             width: scale * 50,
             left: scale * 340,
             bottom: scale * 480,
         };
-        return  <img src={RealityGemImg} id="reality-gem" className="infinity-stone" style={realityGemStyle} />;
+        return <img src={RealityGemImg} id="reality-gem" className="infinity-stone" style={realityGemStyle} />;
     }
 
     renderPowerGem() {
@@ -136,26 +142,54 @@ class Gauntlet extends Component {
     }
 
     canSnap() {
-        return this.state.gems && Object.keys(this.state.gems).length === 6;
+        return this.gemsLeft() === 0;
+    }
+
+    gemsLeft() {
+        if (!this.state.gems) return STONES_AMOUNT;
+        return STONES_AMOUNT - Object.keys(this.state.gems).length;
     }
 
     handleClick = () => {
         if (this.canSnap()) {
+            axios.post(PROCESS_URL, {
+                teamName: localStorage.getItem('teamName'),
+                teamId: localStorage.getItem('teamId'),
+                action: 'snap',
+            });
             this.setState({ snapped: true });
         }
     }
 
-    renderClick() {
+    renderTop() {
+        if (!this.state.checked) return <div>Завантаження...</div>;
         if (this.state.snapped) return;
+        return this.canSnap() ? this.renderClick() : this.renderRemain();
+    }
+
+    renderClick() {
         return <div>
-            <button onClick={this.handleClick} disabled={!this.canSnap()}>Клацнути!</button>
+            <button id="snap-btn" className="button" onClick={this.handleClick} disabled={!this.canSnap()}>Клацнути!</button>
         </div>
+    }
+
+    renderRemain() {
+        return <div id="remaining">
+            <div>
+                <Link to='/'>← На головну</Link>
+            </div>
+            <div>
+                Каменів залишилось: <strong>{this.gemsLeft()}</strong>
+            </div>
+        </div>;
     }
 
     render() {
         return (
             <div id="gauntlet-grid">
-                {this.renderClick()}
+                <div id="gg-top">
+                    {this.renderTop()}
+                </div>
                 {this.renderGauntlet()}
                 {this.renderSnap()}
             </div>

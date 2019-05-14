@@ -30,3 +30,35 @@
     width:100%;
     top: 20%;
 }
+
+#snap-btn { 
+    font-size:24px;
+    border: 0;
+    background: none;
+    padding:5px 10px;
+    display: inline-block;
+    animation: pulsate 1s ease-out infinite;
+    border-radius: 15px;
+}
+
+#gg-top { 
+    font-size: 18px;
+    text-shadow: 0 0 3px #000;
+    color:#fff;
+    padding:15px;
+    text-align: center;
+}
+
+#remaining, #remaining a {
+    color:#fff;
+}
+
+#remaining a { text-decoration: underline;}
+
+#remaining {
+    display: grid;
+    grid-template-columns: auto auto;
+}
+
+#remaining div:first-child { text-align: left;}
+#remaining div:last-child { text-align: right;}

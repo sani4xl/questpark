@@ -143,9 +143,9 @@ table {
 body {
     font-family: 'Play', sans-serif;
     margin: 0;
-  
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background:#000;
 }
 
 #home-grid {
