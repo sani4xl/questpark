@@ -44,6 +44,7 @@ class Home extends Component {
         const code = data.get('code');
         if (!code) {
             alert("Будь ласка введіть код або шифр");
+            return false;
         }
 
         this.setState({ loading: true });
@@ -86,7 +87,7 @@ class Home extends Component {
 
         setTimeout(() => {
             this.setState({wrong: false});
-        }, 2000);
+        }, 4000);
     }
 
     hideFoundGem() {

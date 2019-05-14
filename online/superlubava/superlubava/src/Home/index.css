@@ -16,7 +16,7 @@
 #home-header {
     display: grid;
     grid-template-columns: auto auto auto; 
-    padding: 10px;
+    padding: 10px 10px 0 10px;
 }
 
 #home-header > div:nth-child(2) {text-align: center;}
@@ -59,7 +59,7 @@
 #wrong-line {
     display: inline-block;
     width:100%;
-    transition: all 2s ease-out;
+    transition: all 4s ease-out;
     background: #fff;
     height: 5px;
     border-radius: 5px;

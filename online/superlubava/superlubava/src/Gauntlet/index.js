@@ -184,6 +184,7 @@ class Gauntlet extends Component {
                 Каменів залишилось: {this.gemsLeft()}
             </div>
         </div>
+        
         {this.canSnap() ? this.renderClick() : null}
         </div>;
     }
