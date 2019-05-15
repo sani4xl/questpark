@@ -3,10 +3,10 @@
 #define CLK 8
 #define DIO 9
 
-int blobPin = 5;
+int blobPin = 7;
 int countBlob = 0;
 bool isBlobStatus = false;
-int numberKey = 5555;
+int numberKey = 1960;
 uint8_t data[] = { 0xff, 0xff, 0xff, 0xff };
 TM1637Display display(CLK, DIO);
 
@@ -37,7 +37,7 @@ void loop() {
     sc_start_blob = millis();
   }
 
-  if ( ( millis() - sc_start_blob > 7000 )&&( isBlobStatus == true )) {
+  if ( ( millis() - sc_start_blob > 3300 )&&( isBlobStatus == true )) {
     isBlobStatus = false;
     display.setBrightness(7, false);
     display.showNumberDec(data);
