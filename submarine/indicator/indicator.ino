@@ -123,9 +123,6 @@ ButtonUpdateResult monitorButton(Bounce &button, int index, int delta) {
   }
 
   ButtonUpdateResult result = {index, updated};
-  if (updated) {
-    Serial.println(index);
-  }
   return result;
 }
 
@@ -147,8 +144,6 @@ void checkButtons(){
   if (redUpResult.updated || redDownResult.updated || greenUpResult.updated || greenDownResult.updated) {
       updateLights();
   }
-
-  
 }
 
 void loop() {
