@@ -164,6 +164,8 @@ void checkForWin(){
       continue;
     }
 
+    Serial.println(i);  
+
     if(ledStripIndex[i] == ledStripGreenPins[i]){
       sum ++;
     }
@@ -193,8 +195,10 @@ void checkButtons(){
        Bounce bouncer = bouncers[i];
        bouncers[i].update();
 
-       if ( bouncers[i].read() ) {
-         ledStripActive[i] = !ledStripActive[i];
+       if ( bouncers[i].fell() ) {
+         ledStripActive[i] = false;
+       } else if ( bouncers[i].rose() ) {
+         ledStripActive[i] = true;
        }
     }
   
@@ -205,4 +209,3 @@ void loop() {
   checkButtons();
   renderPixels();
 }
-
