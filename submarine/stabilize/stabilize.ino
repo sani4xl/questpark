@@ -21,15 +21,15 @@ int ledLastTime;
 
 int relePin = 5;
 
-const int ledStripsCount = 2;
-int ledStripPins[ledStripsCount] = {2, 3};
-int buttonPins[ledStripsCount] = {11, 12};
-boolean ledStripActive[ledStripsCount] = {true, true};
-int ledStripIndex[ledStripsCount] = {1, 6};
+const int ledStripsCount = 3;
+int ledStripPins[ledStripsCount] = {2, 3, 4};
+int buttonPins[ledStripsCount] = {10, 11, 12};
+boolean ledStripActive[ledStripsCount] = {true, true, true};
+int ledStripIndex[ledStripsCount] = {1, 6, 3};
 
-int ledStripDirection[ledStripsCount] = {1, 1};
+int ledStripDirection[ledStripsCount] = {1, -1, 1};
 
-int ledStripGreenPins[ledStripsCount] = {3, 6};
+int ledStripGreenPins[ledStripsCount] = {2, 6, 4};
 
 Adafruit_NeoPixel ledStrips[ledStripsCount] ;
 Bounce bouncers[ledStripsCount] ;
