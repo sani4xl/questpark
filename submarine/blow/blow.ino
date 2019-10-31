@@ -3,6 +3,7 @@
 // http:/themakersworkbench.com http://thebestcasescenario.com http://seeedstudio.com
 // https://forum.seeedstudio.com/viewtopic.php?f=4&t=989&p=3632
 /*
+ * Изделие №4
  * распаять 
  * D3 rele
  * D2 желтый провод крутилки через резистер + питание
