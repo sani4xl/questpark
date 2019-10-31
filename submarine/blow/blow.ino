@@ -12,13 +12,23 @@
  * добавить светодиод RGB
  */
 
+#include <Adafruit_NeoPixel.h>
+#ifdef __AVR__
+  #include <avr/power.h>
+#endif
+
+#define NUMPIXELS 16
+
 volatile int NbTopsFan; //measuring the rising edges of the signal
 int Calc;                               
 int hallsensorPin = 2;    //The pin location of the sensor
 int relePin = 3;
+int ledPin = 4;
 unsigned long calculateLastTime;
 boolean calculationActive = false;
 unsigned long powerBlowTime = 0;
+Adafruit_NeoPixel led;
+int threshold = 10000;
 
 void rpm ()     //This is the function that the interupt calls 
 { 
@@ -33,6 +43,10 @@ void setup() //
   calculateLastTime = millis();
   calculationActive = false;
   pinMode(relePin, OUTPUT);
+
+  led = Adafruit_NeoPixel(NUMPIXELS, ledPin, NEO_GRB + NEO_KHZ800);
+  led.begin();
+  led.show();
 } 
 
 
@@ -42,6 +56,21 @@ void unlock() {
 
 void lock() {
   digitalWrite(relePin, LOW);
+}
+
+void turnOffPixels(){
+   led.clear();
+   led.show();
+}
+
+void turnOnPixels(float brightness) {
+
+   Serial.println(round(255.0 * (1.0 - brightness)));
+  
+   led.clear();
+   led.setPixelColor(0, led.Color( round(255.0 * (1.0 - brightness)), round(255.0 * brightness), 0)); // Moderately bright green color.
+   //led.setPixelColor(0, led.Color( 100, 100, 0)); // Moderately bright green color.
+   led.show();
 }
 
 void loop () {
@@ -66,14 +95,21 @@ void loop () {
     }
   } else {
     powerBlowTime = 0;
+    turnOffPixels();
   }
   
   //Serial.print (Calc, DEC); //Prints the number calculated above
   //Serial.print (" L/hour\r\n"); //Prints "L/hour" and returns a  new line
-  if (powerBlowTime > 0 && currentTime - powerBlowTime > 10000) {
-    unlock();
-    delay(60000);
-    lock();
-    powerBlowTime = 0;
+  unsigned long deltaTime = currentTime - powerBlowTime;
+  
+  if (powerBlowTime > 0) {
+    //Serial.println ( (float)deltaTime / (float)threshold);
+    turnOnPixels( (float)deltaTime / (float)threshold);
+    if (deltaTime > threshold) {
+      unlock();
+      delay(60000);
+      lock();
+      powerBlowTime = 0;
+    }
   } 
 }
