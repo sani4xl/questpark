@@ -85,7 +85,6 @@ class Ingridients extends React.Component {
         return selectedItems.indexOf(ingridient);
     }
 
-
     items() {
         return this.ingridients.map((ingridient, index) => {
             return <div key={index} className="ingridient-wrap">
