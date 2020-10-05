@@ -4,6 +4,7 @@ import './App.css';
 
 import Music from './component/Music';
 import Ingridients from './component/Ingridients/index';
+import Register from './component/Register/index';
 
 //import Sound from 'react-sound';
 
@@ -43,6 +44,8 @@ class App extends React.Component {
       
       {this.renderStart()}
       {this.renderGame()}
+
+      <Register />
       
 
     </div>
