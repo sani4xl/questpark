@@ -10,10 +10,3 @@
     text-align: left;
 
 }
-
-.gem-img {
-    object-fit: contain;
-    display: inline-block;
-    max-width: 250px;
-    max-height: 250px;
-}

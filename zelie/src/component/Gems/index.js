@@ -25,7 +25,7 @@ class Gems extends Component {
         if (!this.state.gems) {
             return;
         }
-        console.log(Object.values(this.state.gems));
+        
         return Object.values(this.state.gems).map((gem, index) => {
             console.log(gem);
             return <div key={index} className="gem-wrap">
@@ -41,7 +41,7 @@ class Gems extends Component {
     render() {
     
         if (!gameInfo.hasGems()) {
-            return <div className="control-group" id="no-gems">У вас еще нет магических вещей</div>;
+            return <div className="control-group" id="no-gems">У вас немає магічних речей</div>;
         }
 
         return <div className="gems">

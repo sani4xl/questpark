@@ -24,10 +24,18 @@ class Task extends React.Component {
     componentDidMount() {
         const currentTask = gameInfo.getTask();
         if (currentTask && currentTask.task) {
-            this.setState({taskText: currentTask.task});
+            this.setState({taskText: currentTask.task, icon: currentTask.icon});
         }
     }
 
+    renderIcon() {
+        if (!this.state.icon) {
+            return;
+        }
+        return <div class="center">
+                        <img className="gem-img" src={this.state.icon} />
+                    </div>
+    }
   
     render() {
     
@@ -35,7 +43,8 @@ class Task extends React.Component {
             <div id="task-screen" className="screen info-screen">
                 <div className="control-group">
                     <NavLink className="close-btn" to={`/`}></NavLink>
-                    <div>
+                    {this.renderIcon()}
+                    <div className="task-text">
                         {this.state.taskText}
                     </div>
                 </div>

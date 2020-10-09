@@ -18,7 +18,7 @@ class Game extends React.Component {
         super(props);
 
         this.state = {
-            teamName: localStorage.getItem('teamName') || "Маглы"
+            teamName: localStorage.getItem('teamName') || "Магли"
         }
         
     }
@@ -51,7 +51,7 @@ class Game extends React.Component {
 
         return  <div id="zakl-form" className="control-group">
             <div className="control-row">
-                 Введите заклинание:
+                Магічне слово:
             </div>
             <div className="control-row">
                 <input type="text" className="text" value={this.state.zakl || ''} onChange={(event) => this.updateZakl(event.target.value)} />
@@ -68,7 +68,7 @@ class Game extends React.Component {
             return;
         }
 
-        this.setState({isSending: true, awaitText: 'Проверяем...'});
+        this.setState({isSending: true, awaitText: 'Чаклуємо...'});
         
         axios.post(API_URL, {
             action: 'validate',
@@ -77,26 +77,23 @@ class Game extends React.Component {
             gameId: gameInfo.getGameId(),
         })
         .then((response) => {
-            this.setState({awaitText: 'Поздравляем!'});
+            this.setState({awaitText: 'Вдалося!'});
 
             if (response.data.info) {
                 localStorage.setItem('gameInfo', JSON.stringify(response.data.info));
-            }
-
-            if (response.data.lastGemName) {
-                window.location.href = `/gem/${response.data.lastGemName}/new/true`;
+                window.location.href = `/task`;
             } else {
-                alert("Ошибка! Обратитесь к ведущему!");
+                alert("Помилка! Зверніться до ведучого!");
             }
            
         })
         .catch((error) => {
-            this.setState({awaitText: 'Не верно! Попробуйте еще раз...'});
+            this.setState({awaitText: 'Майже! Спробуйте щє раз...'});
         })
         .then(() => {
             setTimeout(() => {
                 this.setState({isSending: false, zakl: ''});
-            }, 2000);
+            }, 3000);
         });  
     }
 
@@ -109,15 +106,15 @@ class Game extends React.Component {
             return;
         }
 
-        return <button className="btn" onClick={() => this.check()  }>Проверить заклинание</button>;
+        return <button className="btn" onClick={() => this.check()  }>Чаклувати</button>;
     }
 
     renderHeader() {
         
         return <div className="control-group">
-                <div className="control-row">Команда "{this.state.teamName}"</div>
+                <div className="control-row">Факультет "{this.state.teamName}"</div>
                 <div>
-                    <NavLink className="btn" to={`/task`}>Посмотреть задание</NavLink>
+                    <NavLink className="btn" to={`/task`}>Подивитись завдання</NavLink>
                 </div>
             </div>
     }

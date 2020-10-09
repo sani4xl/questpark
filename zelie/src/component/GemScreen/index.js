@@ -44,7 +44,7 @@ class GemScreen extends Component {
         if (!this.props.match.params.new) {
             return;
         }
-        return <NavLink className="btn" to={`/task`}>Следующее задание</NavLink>;
+        return <NavLink className="btn" to={`/task`}>Наступне завдання</NavLink>;
     }
 
     renderCloseButton() {

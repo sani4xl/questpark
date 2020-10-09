@@ -66,17 +66,17 @@ class Register extends React.Component {
             return;
         }
 
-        return <button className="check-zelie-button btn" onClick={() => this.register()  }>Отправить заявку в Хогвартс</button>;
+        return <button className="check-zelie-button btn" onClick={() => this.register()  }>Відправити звернення</button>;
     }
 
     renderControls() {
         if (this.state.isSending) {
-            return <div className="control-group">Отправляем...</div>
+            return <div className="control-group">Чаклуємо...</div>
         }
 
         return  <div className="control-group">
         <div className="control-row">
-            Название команды:
+            Код або назва факультету Хогвартс:
         </div>
         <div className="control-row">
             <input type="text" className="text" value={this.state.teamName || ''} onChange={(event) => this.updateTeamName(event.target.value)} />
