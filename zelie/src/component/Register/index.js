@@ -1,8 +1,7 @@
 import React from 'react';
+import './index.css';
+
 const axios = require('axios');
-
-//import './index.css';
-
 const REGISTER_URL = "https://hp.questpark.com.ua/api/index.php";
 
 class Register extends React.Component {
@@ -23,6 +22,10 @@ class Register extends React.Component {
         if (!this.state.teamName) {
             return;
         }
+
+        const props = this.props;
+
+        this.setState({isSending: true});
         
     axios.post(REGISTER_URL, {
         action: 'register',
@@ -30,8 +33,21 @@ class Register extends React.Component {
     
   })
   .then(function (response) {
-    localStorage.setItem('gameId', response.gameId);
-    localStorage.setItem('gems', response.gems);
+      if (response.data.gameId) {
+        localStorage.setItem('gameId', response.data.gameId);
+      }
+
+      if (response.data.teamName) {
+        localStorage.setItem('teamName', response.data.teamName);
+      }
+
+      if (response.data.info) {
+        localStorage.setItem('gameInfo', JSON.stringify(response.data.info));
+      }
+
+      if (props.onRegistration) {
+        props.onRegistration(response.data.gameId);
+      }
   })
   .catch(function (error) {
     console.log(error);
@@ -44,20 +60,38 @@ class Register extends React.Component {
     updateTeamName(teamName) {
         this.setState({teamName});
     }
+
+    renderButton() {
+        if (!this.state.teamName) {
+            return;
+        }
+
+        return <button className="check-zelie-button btn" onClick={() => this.register()  }>Отправить заявку в Хогвартс</button>;
+    }
+
+    renderControls() {
+        if (this.state.isSending) {
+            return <div className="control-group">Отправляем...</div>
+        }
+
+        return  <div className="control-group">
+        <div className="control-row">
+            Название команды:
+        </div>
+        <div className="control-row">
+            <input type="text" className="text" value={this.state.teamName || ''} onChange={(event) => this.updateTeamName(event.target.value)} />
+        </div>
+        <div>
+            {this.renderButton()}
+        </div>
+        </div>;
+    }
     
     render() {
     
         return (
-            <div>
-                <div>
-                    Название команды:
-                </div>
-                <div>
-                    <input type="text" value={this.state.teamName || ''} onChange={(event) => this.updateTeamName(event.target.value)} />
-                </div>
-                <div>
-                <button className="check-zelie-button" onClick={() => this.register()  }>Отправить заявку в Хогвартс</button>
-                </div>
+            <div id="register-screen" className="screen">
+               {this.renderControls()}
           </div>
           );
         }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { withRouter, Switch, Route, NavLink } from 'react-router-dom';
 
 import './index.css';
 
@@ -129,4 +130,4 @@ class Ingridients extends React.Component {
         }
 }
 
-export default Ingridients;
+export default withRouter(Ingridients);

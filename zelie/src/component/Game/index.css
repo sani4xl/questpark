@@ -1,0 +1,20 @@
+#gems-screen {
+    background: url(../../res/img/castle.jpg) no-repeat;
+    background-size: cover;
+    min-height: 100vh;
+  }
+
+  #no-gems  {
+    top: 100px;
+    position: relative;
+    font-size: 18px;
+  }
+
+  #zakl-form {
+      position: absolute;
+      bottom:0;
+      left:0;
+      width: 100%;
+      margin:0;
+  }
+

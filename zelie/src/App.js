@@ -1,10 +1,14 @@
 import React from 'react';
-import logo from './logo.svg';
+import { withRouter, Switch, Route, NavLink } from 'react-router-dom';
+
 import './App.css';
 
 import Music from './component/Music';
 import Ingridients from './component/Ingridients/index';
-import Register from './component/Register/index';
+import Main from './component/Main/index';
+import Task from './component/Task/index';
+import GemScreen from './component/GemScreen/index';
+
 
 //import Sound from 'react-sound';
 
@@ -20,32 +24,24 @@ class App extends React.Component {
 
   }
 
-  renderStart() {
-    if (this.state.started) {
-      return;
-    }
-    return <button onClick={() => this.setState({started: true})} >Начать</button>
-  }
-
-  renderGame() {
-    if (!this.state.started) {
-      return;
-    }
-
-    return <div>
-      <Ingridients />
-      <Music />
-    </div>
-  }
-
   render() {
+    //<Route path={`/course/:courseId`} component={CourseSelector} />
   return (
     <div className={`App ${this.state.started ? 'game': ''}`}>
       
-      {this.renderStart()}
-      {this.renderGame()}
 
-      <Register />
+      <Switch>
+        
+        <Route exact path='/ingridients' component={Ingridients} />
+        <Route exact path='/task' component={Task} />
+        <Route path={`/gem/:gemName/new/:new`} component={GemScreen} />
+        <Route path={`/gem/:gemName`} component={GemScreen} />
+        
+        <Route path='/' component={Main} />
+        
+      </Switch>
+
+      <Music />
       
 
     </div>
@@ -53,4 +49,4 @@ class App extends React.Component {
   }
 }
 
-export default App;
+export default withRouter(App);
