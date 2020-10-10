@@ -11,7 +11,7 @@ class Register extends React.Component {
         super(props);
 
         this.state = {
-            teamName: ''
+            teamCode: null
         }
         
     }
@@ -19,20 +19,22 @@ class Register extends React.Component {
   
     register() {
 
-        if (!this.state.teamName) {
+        if (!this.state.teamCode) {
             return;
         }
 
         const props = this.props;
 
-        this.setState({isSending: true});
+        this.setState({isSending: 'Чаклуємо...'});
         
     axios.post(REGISTER_URL, {
         action: 'register',
-        teamName: this.state.teamName
+        teamCode: this.state.teamCode
     
   })
-  .then(function (response) {
+  .then( (response) => {
+        //this.setState({isSending: null});
+
       if (response.data.gameId) {
         localStorage.setItem('gameId', response.data.gameId);
       }
@@ -49,20 +51,25 @@ class Register extends React.Component {
         props.onRegistration(response.data.gameId);
       }
   })
-  .catch(function (error) {
+  .catch((error) => {
     console.log(error);
+    this.setState({isSending: 'Такого факультету не існує!'});
+
+   
   })
-  .then(function () {
-    // always executed
+  .then( ()  => {
+    setTimeout(() => {
+        this.setState({isSending: null});
+    }, 3000);
   });  
     }
 
-    updateTeamName(teamName) {
-        this.setState({teamName});
+    updateTeamCode(teamCode) {
+        this.setState({teamCode});
     }
 
     renderButton() {
-        if (!this.state.teamName) {
+        if (!this.state.teamCode) {
             return;
         }
 
@@ -71,7 +78,7 @@ class Register extends React.Component {
 
     renderControls() {
         if (this.state.isSending) {
-            return <div className="control-group">Чаклуємо...</div>
+            return <div className="control-group">{this.state.isSending}</div>
         }
 
         return  <div className="control-group">
@@ -79,7 +86,7 @@ class Register extends React.Component {
             Введіть код факультету Хогвартс:
         </div>
         <div className="control-row">
-            <input type="text" className="text" value={this.state.teamName || ''} onChange={(event) => this.updateTeamName(event.target.value)} />
+            <input type="text" className="text" value={this.state.teamCode || ''} onChange={(event) => this.updateTeamCode(event.target.value)} />
         </div>
         <div>
             {this.renderButton()}

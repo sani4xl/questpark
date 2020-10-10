@@ -6,7 +6,6 @@ import Client from '../helper/Client';
 
 const client = new Client();
 
-const gameInfo = new GameInfo();
 
 class QR extends React.Component {
 
@@ -15,14 +14,9 @@ class QR extends React.Component {
         super(props);
 
         this.state = {
-            teamName: '',
-            taskText: 'Нету активных заданий'
+            
         }
         
-    }
-
-    componentDidMount() {
-      
     }
 
     componentDidMount() {

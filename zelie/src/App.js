@@ -10,6 +10,7 @@ import Task from './component/Task/index';
 import GemScreen from './component/GemScreen/index';
 import Admin from './component/Admin/index';
 import QR from './component/QR/index';
+import RegisterQR from './component/RegisterQR/index';
 
 
 //function App() {
@@ -37,6 +38,8 @@ class App extends React.Component {
         <Route path={`/gem/:gemName/new/:new`} component={GemScreen} />
         <Route path={`/gem/:gemName`} component={GemScreen} />
         <Route path={`/qr/:code`} component={QR} />
+        <Route path={`/autoreg/:code`} component={RegisterQR} />
+        
         
         <Route path='/' component={Main} />
         
