@@ -1,4 +1,7 @@
-
+#no-gems {
+    line-height: 1.5em;
+    font-size: 18px;
+}
 
 .gems {
     display: flex;

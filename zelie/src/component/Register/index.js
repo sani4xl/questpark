@@ -76,7 +76,7 @@ class Register extends React.Component {
 
         return  <div className="control-group">
         <div className="control-row">
-            Код або назва факультету Хогвартс:
+            Введіть код факультету Хогвартс:
         </div>
         <div className="control-row">
             <input type="text" className="text" value={this.state.teamName || ''} onChange={(event) => this.updateTeamName(event.target.value)} />

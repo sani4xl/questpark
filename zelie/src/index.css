@@ -86,7 +86,7 @@ body {
 .text {
   font-size: 18px;
   background: #333;
-  border: 1px solid #444;
+  border: 4px ridge #444;
   color: #eee;
   padding: 5px 10px;
   outline: none;
@@ -96,7 +96,7 @@ body {
 .btn {
   font-size: 18px;
   background: #501D14;
-  border: 1px solid #602D24;
+  border: 3px outset #a57710;
   color: #eee;
   padding: 5px 10px;
   outline: none;

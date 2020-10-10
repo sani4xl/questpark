@@ -1,15 +1,13 @@
 import React from 'react';
 import { withRouter, Switch, Route, NavLink } from 'react-router-dom';
 import GameInfo from '../helper/GameInfo';
+import Client from '../helper/Client';
 import Gems from '../Gems/index';
 import './index.css';
 
 const gameInfo = new GameInfo();
+const client = new Client();
 
-
-
-const axios = require('axios');
-const API_URL = "https://hp.questpark.com.ua/api/index.php";
 
 class Game extends React.Component {
 
@@ -63,20 +61,22 @@ class Game extends React.Component {
     }
 
     check() {
-
         if (!this.state.zakl) {
             return;
         }
 
+        this.validate(this.state.zakl);
+
+    }
+
+    validate(code) {
+
+       
+
         this.setState({isSending: true, awaitText: 'Чаклуємо...'});
         
-        axios.post(API_URL, {
-            action: 'validate',
-            code: this.state.zakl,
-            taskIndex: gameInfo.getTaskIndex(),
-            gameId: gameInfo.getGameId(),
-        })
-        .then((response) => {
+        
+        client.checkCode(code).then((response) => {
             this.setState({awaitText: 'Вдалося!'});
 
             if (response.data.info) {
@@ -114,7 +114,7 @@ class Game extends React.Component {
         return <div className="control-group">
                 <div className="control-row">Факультет "{this.state.teamName}"</div>
                 <div>
-                    <NavLink className="btn" to={`/task`}>Подивитись завдання</NavLink>
+                    <NavLink className="btn" to={`/task`}>Подивитися завдання</NavLink>
                 </div>
             </div>
     }

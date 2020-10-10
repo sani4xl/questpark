@@ -8,9 +8,8 @@ import Ingridients from './component/Ingridients/index';
 import Main from './component/Main/index';
 import Task from './component/Task/index';
 import GemScreen from './component/GemScreen/index';
-
-
-//import Sound from 'react-sound';
+import Admin from './component/Admin/index';
+import QR from './component/QR/index';
 
 
 //function App() {
@@ -34,8 +33,10 @@ class App extends React.Component {
         
         <Route exact path='/ingridients' component={Ingridients} />
         <Route exact path='/task' component={Task} />
+        <Route exact path='/master' component={Admin} />
         <Route path={`/gem/:gemName/new/:new`} component={GemScreen} />
         <Route path={`/gem/:gemName`} component={GemScreen} />
+        <Route path={`/qr/:code`} component={QR} />
         
         <Route path='/' component={Main} />
         

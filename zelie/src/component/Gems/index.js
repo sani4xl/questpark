@@ -41,7 +41,7 @@ class Gems extends Component {
     render() {
     
         if (!gameInfo.hasGems()) {
-            return <div className="control-group" id="no-gems">У вас немає магічних речей</div>;
+            return <div className="control-group" id="no-gems">У вас щє немає магічних речей. Пройдіть завдання що б отримати</div>;
         }
 
         return <div className="gems">
