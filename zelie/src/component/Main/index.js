@@ -16,6 +16,7 @@ class Main extends Component {
 
     registerGame(gameId) {
         this.setState({gameId});
+        window.location.href = `/task`;
     }
 
     renderGems() {

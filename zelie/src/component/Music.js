@@ -13,7 +13,6 @@ class Music extends React.Component {
     }
 
     componentDidMount() {
-        console.log('playing theme...');
         this.audio.play();
     }
 

@@ -119,6 +119,8 @@ body {
   padding-top:20px;
   min-height: 100vh;
   background: #444;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 .info-screen .close-btn {

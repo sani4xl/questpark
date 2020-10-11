@@ -24,7 +24,7 @@ class Task extends React.Component {
     componentDidMount() {
         const currentTask = gameInfo.getTask();
         if (currentTask && currentTask.task) {
-            this.setState({taskText: currentTask.task, icon: currentTask.icon});
+            this.setState({taskText: currentTask.task, icon: currentTask.icon, bg: currentTask.bg});
         }
     }
 
@@ -36,11 +36,23 @@ class Task extends React.Component {
                         <img className="gem-img" src={this.state.icon} />
                     </div>
     }
+
+    getBgStyle() {
+        
+        const bg = this.state.bg;
+        if (!bg) {
+            return;
+        }
+
+        return {backgroundImage: `url(${bg})`};
+
+        
+    }
   
     render() {
     
         return (
-            <div id="task-screen" className="screen info-screen">
+            <div id="task-screen" className="screen info-screen" style={this.getBgStyle()}>
                 <div className="control-group">
                     <NavLink className="close-btn" to={`/`}></NavLink>
                     {this.renderIcon()}

@@ -54,11 +54,22 @@ class GemScreen extends Component {
         return <NavLink className="close-btn" to={`/`}></NavLink>;
     }
 
+    getBgStyle() {
+        
+        const gem = this.state.gem;
+        if (!gem || !gem.bg) {
+            return;
+        }
+
+        return {backgroundImage: `url(${gem.bg})`};
+
+        
+    }
 
     render() {
     
         return (
-            <div id="gem-screen" className="screen info-screen">
+            <div id="gem-screen" className="screen info-screen" style={this.getBgStyle()}>
                 <div className="control-group">
                     {this.renderCloseButton()}
                     <div>
