@@ -17,48 +17,97 @@ int gameMode = 1;
 const int DOMINATION_MODE = 1;
 const int BOMB_DEFUSE_MODE = 2;
 
-const int MAX_SCORES = 9999;
-const int CHAR_LENGTH_PER_TEAM = 4;
+const int MAX_SCORES = 999;
+const int CHAR_LENGTH_PER_TEAM = 3;
 
 int teamRedScores = 0;
 int teamGreenScores = 0;
+int countingTeam = 0; // 1 for red, -1 for green
+
+int gameStatus = 1;
+
+const int GAME_RUNNING = 1;
+const int GAME_STOPPED = 0;
+
+String gameIndicator = "";
 
 
 void setup() {
-  tm.displayBegin();
   serialinit();
-
+  
+  tm.displayBegin();
   tm.brightness(8);
-  //tm.displayText("12345678");
-
+  
+  displayNothing();
+  
+  switchToRed(); // todo: remove
 }
 
 void loop() {
-  gameSelector();
+  runGame();
 
 }
 
-void gameSelector() {
+void runGame() {
+
+  if (gameStatus != GAME_RUNNING) {
+    return;
+  }
+  
   switch (gameMode) {
     case DOMINATION_MODE:
       runDominatorGame();
       break;
   }
+
+  displayGameIndicator();
   
 }
 
-void runDominatorGame() {
-  teamRedScores+= 1;
-  teamGreenScores+= 2;
+void switchToRed() {
+  countingTeam = 1;
+}
 
-  String text = formatScores(teamRedScores) + formatScores(teamGreenScores);
-  int str_len = text.length() + 1;
-  char char_array[str_len];
-  text.toCharArray(char_array, str_len);
-  tm.displayText(char_array);
-  delay(500);
+void switchToGren() {
+  countingTeam = -1;
+}
+
+void countTeams() {
+  if (countingTeam > 0) { 
+    teamRedScores+= 1;
+  } else if (countingTeam < 0) { 
+    teamGreenScores+= 1;
+  }
+  
+  if (teamRedScores > MAX_SCORES) {
+    teamRedScores = MAX_SCORES;
+  }
+  
+  
+  if (teamGreenScores > MAX_SCORES) {
+    teamGreenScores = MAX_SCORES;
+  }
+}
+
+void runDominatorGame() {
+  
+  countTeams();
+  gameIndicator = formatScores(teamRedScores) + "  " + formatScores(teamGreenScores); // delimiter 2 spaces
+  
+  delay(50);
 
   checkForWinner();
+}
+
+void displayGameIndicator() {
+  int str_len = gameIndicator.length() + 1;
+  char char_array[str_len];
+  gameIndicator.toCharArray(char_array, str_len);
+  tm.displayText(char_array);
+}
+
+void displayNothing() {
+  tm.displayText("________");
 }
 
 String formatScores(int scores) {
@@ -72,9 +121,11 @@ String formatScores(int scores) {
 }
 
 void checkForWinner() {
-  if (!(teamRedScores > MAX_SCORES || teamGreenScores > MAX_SCORES)) { // || outof time
+  if (!(teamRedScores >= MAX_SCORES || teamGreenScores >= MAX_SCORES)) { // || outof time
     return;
   }
+
+  gameStatus = GAME_STOPPED;
 
   if (teamRedScores == teamGreenScores) {
     // draw;
@@ -83,7 +134,18 @@ void checkForWinner() {
   } else {
     // green wins
   }
-  
+
+  blinkGameIndicator();
+
+}
+
+void blinkGameIndicator() {
+  for (int i = 0; i < 10; i++) {
+    displayNothing();
+    delay(500);
+    displayGameIndicator();
+    delay(500);
+  }
 }
 
 
