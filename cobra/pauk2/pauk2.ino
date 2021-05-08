@@ -92,8 +92,11 @@ void loop() {
 
 
   // Verify if the NUID has been readed
-  if ( rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()){
+  if ( rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
     MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak);
+
+    Serial.println("reading rfid");
+//    Serial.println("reading rfid");
       
     if (
       
@@ -102,7 +105,7 @@ void loop() {
          piccType != MFRC522::PICC_TYPE_MIFARE_4K)) {
       //Serial.println(F("Your tag is not of type MIFARE Classic."));
       //return;
-      /*
+      //*
         Serial.println(F("The NUID tag is:"));
     Serial.print(F("In hex: "));
     printHex(rfid.uid.uidByte, rfid.uid.size);
@@ -135,12 +138,24 @@ void loop() {
 }
 
 boolean isUidMatched(byte *uidByte, byte *nuidPICC){
+  Serial.println(uidByte[0] != nuidPICC[0]);
+  Serial.println(uidByte[1] != nuidPICC[1]);
+  Serial.println(uidByte[2] != nuidPICC[2]); 
+  Serial.println(uidByte[3] != nuidPICC[3]);
+
+  return true;
+    
   if (uidByte[0] != nuidPICC[0] || 
-    uidByte[1] != nuidPICC[1] || 
-    uidByte[2] != nuidPICC[2] || 
-    uidByte[3] != nuidPICC[3] ) {
+    uidByte[1] != nuidPICC[1]
+    
+    //uidByte[2] != nuidPICC[2] || 
+    //uidByte[3] != nuidPICC[3] 
+    ) {
+       Serial.println("no match");
        return false;
     }
+
+    Serial.println("match");
 
     return true;
 }
