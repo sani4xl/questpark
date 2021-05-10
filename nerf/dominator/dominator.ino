@@ -5,13 +5,14 @@
 #include <MFRC522.h>
 #include <SPI.h>
 
+#include <SoftwareSerial.h> // mp3
 
 // LED
 #include <Adafruit_NeoPixel.h>
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
-#define LED_PIN   6
+#define LED_PIN   8 // LED strip DI
 #define NUMPIXELS 8
 
 Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
@@ -31,29 +32,64 @@ Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
  * SPI SCK     SCK          13 / ICSP-3   52        D13        ICSP-3           15
  */
 
-const int RST_PIN = 9;
-const int SS_PIN = 10;
+#define RST_PIN 9
+#define SS_PIN 10
 
 MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
 MFRC522::MIFARE_Key key; 
 
 
-const int TM_STB = 4; 
-const int TM_CLK = 3; 
-const int TM_DIO = 2; 
+#define TM_STB 4 
+#define TM_CLK 3 
+#define TM_DIO 2 
 
 bool high_freq = false; //default false,, If using a high freq CPU > ~100 MHZ set to true. 
 
 //Constructor object (GPIO STB , GPIO CLOCK , GPIO DIO, use high freq MCU)
 TM1638plus tm(TM_STB, TM_CLK , TM_DIO, high_freq);
 
+
+/** 
+ * MP3  
+ * 
+ * Make sure your micro sd card is formatted as FAT16 or FAT32
+ * 
+ * All music tracks in folder /01
+ * /01/001xxx.mp3
+ * /01/002xxx.mp3
+ */
+
+
+#define CMD_PLAY_W_INDEX 0X03
+#define CMD_SET_VOLUME 0X06
+#define CMD_SEL_DEV 0X09
+  #define DEV_TF 0X02
+#define CMD_PLAY 0X0D
+#define CMD_PAUSE 0X0E
+#define CMD_STOP 0X16
+#define CMD_PLAY_FOLDER 0X17
+#define CMD_SINGLE_CYCLE 0X19
+  #define SINGLE_CYCLE_ON 0X00
+  #define SINGLE_CYCLE_OFF 0X01
+#define CMD_PLAY_W_VOL 0X22
+
+#define MP3_RX 5
+#define MP3_TX 6
+
+
+SoftwareSerial mp3Serial(MP3_TX, MP3_RX);
+
+static int8_t Send_buf[8] = {0} ;
+
+// game setup
+
 int gameMode = 1;
 
-const int DOMINATION_MODE = 1;
-const int BOMB_DEFUSE_MODE = 2;
+#define DOMINATION_MODE 1
+#define BOMB_DEFUSE_MODE 2
 
-const int MAX_SCORES = 999;
-const int CHAR_LENGTH_PER_TEAM = 3;
+#define MAX_SCORES 999
+#define CHAR_LENGTH_PER_TEAM 3
 
 int teamRedScores = 0;
 int teamGreenScores = 0;
@@ -61,14 +97,16 @@ int countingTeam = 0; // 1 for red, -1 for green
 
 int gameStatus = 1;
 
-const int GAME_RUNNING = 1;
-const int GAME_STOPPED = 0;
+#define GAME_RUNNING 1
+#define GAME_STOPPED 0
 
 String gameIndicator = "";
 
 int currentSec;
 int lastScoreSec;
-const int SCORE_TIME_GAP = 1; // time between ticks to add score
+int lastActivitySec;
+#define SCORE_TIME_GAP 1 // time between ticks to add score
+#define NON_ACTIVITY_TIME 5 // time before switch to neutral state
 
 struct Code {int c1; int c2; int c3; int c4;};
 
@@ -88,9 +126,37 @@ void setup() {
   initRfid();
   initTimer();
   initLed();
-  
-  //switchToRed(); // todo: remove
+  initMp3Player();
+
+  switchToNeutral(); // for domination
 }
+
+void initMp3Player(){
+  
+  mp3Serial.begin(9600);
+  delay(500);//Wait chip initialization is complete
+  sendMp3Command(CMD_SEL_DEV, DEV_TF);//select the TF card  
+  delay(200);//wait for 200ms
+  //sendCommand(CMD_SET_VOLUME, 0X0F);//установить громкость в 15 (50%)
+//  sendMp3Command(CMD_SET_VOLUME, 0X16);//установить громкость в x1E=30 (100%)
+  sendMp3Command(CMD_SET_VOLUME, 0X06);//установить громкость в x1E=30 (100%)
+  delay(200);
+  Serial.println(F("MP3 initialized..."));
+  
+  
+  //sendCommand(CMD_SINGLE_CYCLE, SINGLE_CYCLE_OFF);//запустить зацикленное проигрывание содержимого папки "/01"
+  //int songCode = word(0x01, 1);
+  //sendCommand(0X0F, songCode);// играем трек 001 из папки 01
+  playMusic();
+//  int songCode = word(0x02, 1);
+//  sendMp3Command(0X0F, songCode);
+  delay(100);
+}
+
+void playMusic() {
+  sendMp3Command(CMD_PLAY_FOLDER, 0X0102); //запустить зацикленное проигрывание содержимого папки "/01"
+}
+
 
 void initLed() {
   #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
@@ -98,6 +164,8 @@ void initLed() {
   #endif
 
   pixels.begin();
+
+  turnOffPixels();
 }
 
 void initTimer() {
@@ -108,7 +176,7 @@ void initTimer() {
 void initDisplay() {
   tm.displayBegin();
   tm.brightness(8);
-  displayNothing();
+  setPixelsBlue();
 }
 
 void initRfid() {
@@ -125,14 +193,14 @@ void loop() {
   calculateCurrentSec();
   runGame();
 
-  pixels.clear();
+//  pixels.clear();
 
-  for(int i=0; i<NUMPIXELS; i++) {
-
-    pixels.setPixelColor(i, pixels.Color(0, 150, 0));
-    pixels.show();
-    //delay(DELAYVAL);
-  }
+//  for(int i=0; i<NUMPIXELS; i++) {
+//
+//    pixels.setPixelColor(i, pixels.Color(0, 150, 0));
+//    pixels.show();
+//    //delay(DELAYVAL);
+//  }
 
 }
 
@@ -156,18 +224,31 @@ void runGame() {
   
 }
 
+void playRedSwitchTrack() {
+  int songCode = word(0x02, 1);
+  sendMp3Command(0X0F, songCode);
+}
+
+void playGreenSwitchTrack() {
+  int songCode = word(0x02, 1);
+  sendMp3Command(0X0F, songCode);
+}
+
 void switchToRed() {
   countingTeam = 1;
   setPixelsRed();
+  playRedSwitchTrack();
 }
 
 void switchToGreen() {
   countingTeam = -1;
   setPixelsGreen();
+  playGreenSwitchTrack();
 }
 
 void switchToNeutral() {
   countingTeam = 0;
+  setPixelsBlue();
 }
 
 void countTeams() {
@@ -179,9 +260,9 @@ void countTeams() {
   lastScoreSec = currentSec;
   
   if (countingTeam > 0) { 
-    teamRedScores+= 1;
+    teamRedScores += countingTeam;
   } else if (countingTeam < 0) { 
-    teamGreenScores+= 1;
+    teamGreenScores -= countingTeam;
   }
   
   if (teamRedScores > MAX_SCORES) {
@@ -200,6 +281,7 @@ void runDominatorGame() {
   gameIndicator = formatScores(teamRedScores) + "  " + formatScores(teamGreenScores); // delimiter 2 spaces
   
   checkForSwitch();
+  checkForNeutralMatch();
   checkForWinner();
 }
 
@@ -235,36 +317,46 @@ void checkForSwitch() {
     printDec(rfid.uid.uidByte, rfid.uid.size);
     Serial.println();
        
-    checkRedMatch(rfid.uid.uidByte);
-    checkGreenMatch(rfid.uid.uidByte);
-
-
+    if (checkRedMatch(rfid.uid.uidByte) || checkGreenMatch(rfid.uid.uidByte)) {
+      lastActivitySec = currentSec;
+    } 
       
     rfid.PICC_HaltA();
     rfid.PCD_StopCrypto1();
     
     delay(50);
-  
 }
 
-void checkRedMatch(byte *uidByte) {
-  if (!isUuidMatchList(uidByte, redCodes)) {
+void checkForNeutralMatch() {
+  if (countingTeam == 0 || currentSec - lastActivitySec < NON_ACTIVITY_TIME) {
     return;
+  }
+
+  Serial.println("goes neutral");
+  
+  switchToNeutral();
+}
+
+bool checkRedMatch(byte *uidByte) {
+  if (!isUuidMatchList(uidByte, redCodes)) {
+    return false;
   }
 
   Serial.println("red match");
 
   switchToRed();
+  return true;
 }
 
-void checkGreenMatch(byte *uidByte) {
+bool checkGreenMatch(byte *uidByte) {
   if (!isUuidMatchList(uidByte, greenCodes)) {
-    return;
+    return false;
   }
 
   Serial.println("green match");
 
   switchToGreen();
+  return true;
 }
 
 bool isUuidMatchList(byte *uidByte, Code *codes) {
@@ -367,6 +459,7 @@ void printDec(byte *buffer, byte bufferSize) {
 
 
 void turnOffPixels(){
+  pixels.clear();
    for(int i=0; i < NUMPIXELS; i++){
 
     // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
@@ -377,11 +470,15 @@ void turnOffPixels(){
 }
 
 void setPixelsGreen() {
-  setPixelsColor(pixels.Color(0,255,0));
+  setPixelsColor(pixels.Color(0, 255, 0));
+}
+
+void setPixelsBlue() {
+  setPixelsColor(pixels.Color(0, 0, 255));
 }
 
 void setPixelsRed() {
-  setPixelsColor(pixels.Color(255,0,0));
+  setPixelsColor(pixels.Color(255, 0, 0));
 }
 
 void setPixelsColor(uint32_t color){
@@ -390,4 +487,21 @@ void setPixelsColor(uint32_t color){
     pixels.setPixelColor(i, color); // Moderately bright green color.
    }  
    pixels.show();
+}
+
+void sendMp3Command(int8_t command, int16_t dat)
+{
+  delay(20);
+  Send_buf[0] = 0x7e; //starting byte
+  Send_buf[1] = 0xff; //version
+  Send_buf[2] = 0x06; //the number of bytes of the command without starting byte and ending byte
+  Send_buf[3] = command; //
+  Send_buf[4] = 0x00;//0x00 = no feedback, 0x01 = feedback
+  Send_buf[5] = (int8_t)(dat >> 8);//datah
+  Send_buf[6] = (int8_t)(dat); //datal
+  Send_buf[7] = 0xef; //ending byte
+  for(uint8_t i=0; i<8; i++)//
+  {
+    mp3Serial.write(Send_buf[i]) ;
+  }
 }
