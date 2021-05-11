@@ -83,11 +83,6 @@ static int8_t Send_buf[8] = {0} ;
 
 // game setup
 
-int gameMode = 1;
-
-#define DOMINATION_MODE 1
-#define BOMB_DEFUSE_MODE 2
-
 #define MAX_SCORES 999
 #define CHAR_LENGTH_PER_TEAM 3
 
@@ -95,10 +90,15 @@ int teamRedScores = 0;
 int teamGreenScores = 0;
 int countingTeam = 0; // 1 for red, -1 for green
 
-int gameStatus = 1;
+int gameStatus = 0;
+int gameMode = 0;
 
 #define GAME_RUNNING 1
 #define GAME_STOPPED 0
+
+#define GAME_MODE_NONE 0
+#define GAME_MODE_DOMINATION 1
+#define GAME_MODE_DEFUSE 2
 
 String gameIndicator = "";
 
@@ -108,15 +108,24 @@ int lastActivitySec;
 #define SCORE_TIME_GAP 1 // time between ticks to add score
 #define NON_ACTIVITY_TIME 5 // time before switch to neutral state
 
+byte *currentCode = NULL;
+
 struct Code {int c1; int c2; int c3; int c4;};
+
 
 Code redCodes[] = {
   {20, 75, 226, 43}
 };
 
 Code greenCodes[] = {
-  {103, 155, 194, 95}
+  {103, 155, 194, 95},
+  {215, 3, 73, 98},
+  {247, 254, 70, 99}
 };
+
+const Code dominoGameCode = {7, 216, 65, 99};
+const Code defuseGameCode = {215, 76, 84, 98};
+const Code stopGameCode = {231, 105, 62, 99};
 
 
 void setup() {
@@ -127,8 +136,13 @@ void setup() {
   initTimer();
   initLed();
   initMp3Player();
+}
 
-  switchToNeutral(); // for domination
+void loop() {
+  calculateCurrentSec();
+  readCode();
+  selectGame();
+  runGame();
 }
 
 void initMp3Player(){
@@ -176,7 +190,7 @@ void initTimer() {
 void initDisplay() {
   tm.displayBegin();
   tm.brightness(8);
-  setPixelsBlue();
+  turnOffPixels();
 }
 
 void initRfid() {
@@ -189,20 +203,6 @@ void initRfid() {
   }
 }
 
-void loop() {
-  calculateCurrentSec();
-  runGame();
-
-//  pixels.clear();
-
-//  for(int i=0; i<NUMPIXELS; i++) {
-//
-//    pixels.setPixelColor(i, pixels.Color(0, 150, 0));
-//    pixels.show();
-//    //delay(DELAYVAL);
-//  }
-
-}
 
 void calculateCurrentSec() {
   currentSec = millis() / 1000;
@@ -215,12 +215,20 @@ void runGame() {
   }
   
   switch (gameMode) {
-    case DOMINATION_MODE:
+    case GAME_MODE_DOMINATION:
       runDominatorGame();
       break;
+    case GAME_MODE_DEFUSE:
+      runDefuseGame();
+      break;  
+    default:
+      return;
   }
 
   displayGameIndicator();
+}
+
+void runDefuseGame() {
   
 }
 
@@ -275,6 +283,19 @@ void countTeams() {
   }
 }
 
+void startGame(int newGameMode) {
+  gameMode = newGameMode;
+  gameStatus = GAME_RUNNING;
+  setPixelsBlue();
+}
+
+void stopGame() {
+  gameMode = GAME_MODE_NONE;
+  gameStatus = GAME_STOPPED;
+  turnOffPixels();
+  displayNothing();
+}
+
 void runDominatorGame() {
   
   countTeams();
@@ -285,9 +306,9 @@ void runDominatorGame() {
   checkForWinner();
 }
 
-
-void checkForSwitch() {
-
+void readCode() {
+  currentCode = NULL;
+  
   if (!rfid.PICC_IsNewCardPresent()) {
     return;
   }
@@ -316,15 +337,51 @@ void checkForSwitch() {
     Serial.print(F("In dec: "));
     printDec(rfid.uid.uidByte, rfid.uid.size);
     Serial.println();
-       
-    if (checkRedMatch(rfid.uid.uidByte) || checkGreenMatch(rfid.uid.uidByte)) {
-      lastActivitySec = currentSec;
-    } 
-      
+
+    currentCode = rfid.uid.uidByte;
+
     rfid.PICC_HaltA();
     rfid.PCD_StopCrypto1();
     
     delay(50);
+}
+
+void selectGame() {
+  if (currentCode == NULL) {
+      return;
+  }
+
+  Serial.println("selecting game...");
+  if(isUuidMatch(currentCode, dominoGameCode)) {
+    Serial.println("Domination mode selected");
+    switchToNeutral();
+    startGame(GAME_MODE_DOMINATION);
+  }
+
+  if(isUuidMatch(currentCode, defuseGameCode)) {
+    Serial.println("Domination mode selected");
+    startGame(GAME_MODE_DEFUSE);
+  }
+
+  if(isUuidMatch(currentCode, stopGameCode)) {
+    Serial.println("stop game");
+    stopGame();
+  }
+    
+}
+
+void checkForSwitch() {
+
+    if (currentCode == NULL) {
+      return;
+    }
+
+    Serial.println("check for team switch");
+      
+    if (checkRedMatch(currentCode) || checkGreenMatch(currentCode)) {
+      lastActivitySec = currentSec;
+    } 
+    
 }
 
 void checkForNeutralMatch() {
@@ -338,7 +395,8 @@ void checkForNeutralMatch() {
 }
 
 bool checkRedMatch(byte *uidByte) {
-  if (!isUuidMatchList(uidByte, redCodes)) {
+//  Serial.println("red check");
+  if (!isUuidMatchList(uidByte, redCodes, sizeof(redCodes) / sizeof(redCodes[0]))) {
     return false;
   }
 
@@ -349,7 +407,8 @@ bool checkRedMatch(byte *uidByte) {
 }
 
 bool checkGreenMatch(byte *uidByte) {
-  if (!isUuidMatchList(uidByte, greenCodes)) {
+//  Serial.println("green check");
+  if (!isUuidMatchList(uidByte, greenCodes, sizeof(greenCodes) / sizeof(greenCodes[0]) )) {
     return false;
   }
 
@@ -359,9 +418,11 @@ bool checkGreenMatch(byte *uidByte) {
   return true;
 }
 
-bool isUuidMatchList(byte *uidByte, Code *codes) {
+bool isUuidMatchList(byte *uidByte, Code *codes, int listSize) {
+//  Serial.println("list size");
+//  Serial.println(listSize);
   bool match = false;
-  for (int i = 0; i < 1; i++) {
+  for (int i = 0; i < listSize; i++) {
     if(isUuidMatch(uidByte, codes[i])){
         match = true;
         break;
@@ -371,9 +432,11 @@ bool isUuidMatchList(byte *uidByte, Code *codes) {
   return match;
 }
 
-bool isUuidMatch(byte *uidByte, Code code) {
+
+
+bool isUuidMatch(byte *uidByte, Code code) {   
   return
-    int(uidByte[0]) == int(code.c1) &&
+    int(uidByte[0]) == code.c1 &&
     int(uidByte[1]) == code.c2 &&
     int(uidByte[2]) == code.c3 &&
     int(uidByte[3]) == code.c4;
@@ -387,7 +450,7 @@ void displayGameIndicator() {
 }
 
 void displayNothing() {
-  tm.displayText("________");
+  tm.displayText("        ");
 }
 
 String formatScores(int scores) {
@@ -460,12 +523,14 @@ void printDec(byte *buffer, byte bufferSize) {
 
 void turnOffPixels(){
   pixels.clear();
+  
    for(int i=0; i < NUMPIXELS; i++){
 
     // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
     pixels.setPixelColor(i, pixels.Color(0,0,0)); // Moderately bright green color.
    }  
    pixels.show();
+  
 
 }
 
