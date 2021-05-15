@@ -60,6 +60,7 @@ TM1638plus tm(TM_STB, TM_CLK , TM_DIO, high_freq);
  */
 
 
+#define CMD_NEXT 0X01
 #define CMD_PLAY_W_INDEX 0X03
 #define CMD_SET_VOLUME 0X06
 #define CMD_SEL_DEV 0X09
@@ -76,15 +77,16 @@ TM1638plus tm(TM_STB, TM_CLK , TM_DIO, high_freq);
 #define MP3_RX 5
 #define MP3_TX 6
 
-
+int currentTrack = 0;
 SoftwareSerial mp3Serial(MP3_TX, MP3_RX);
 
 static int8_t Send_buf[8] = {0} ;
 
 // game setup
 
-#define MAX_SCORES 999
+#define MAX_SCORES 10 //999
 #define CHAR_LENGTH_PER_TEAM 3
+#define DOMINO_GAME_DURATION_SEC 10
 
 int teamRedScores = 0;
 int teamGreenScores = 0;
@@ -103,6 +105,7 @@ int gameMode = 0;
 String gameIndicator = "";
 
 int currentSec;
+int gameStartSec;
 int lastScoreSec;
 int lastActivitySec;
 #define SCORE_TIME_GAP 1 // time between ticks to add score
@@ -126,6 +129,8 @@ Code greenCodes[] = {
 const Code dominoGameCode = {7, 216, 65, 99};
 const Code defuseGameCode = {215, 76, 84, 98};
 const Code stopGameCode = {231, 105, 62, 99};
+const Code startGameCode = {103, 191, 66, 99};
+
 
 
 void setup() {
@@ -159,18 +164,9 @@ void initMp3Player(){
   
   
   //sendCommand(CMD_SINGLE_CYCLE, SINGLE_CYCLE_OFF);//запустить зацикленное проигрывание содержимого папки "/01"
-  //int songCode = word(0x01, 1);
-  //sendCommand(0X0F, songCode);// играем трек 001 из папки 01
-  playMusic();
-//  int songCode = word(0x02, 1);
-//  sendMp3Command(0X0F, songCode);
+
   delay(100);
 }
-
-void playMusic() {
-  sendMp3Command(CMD_PLAY_FOLDER, 0X0102); //запустить зацикленное проигрывание содержимого папки "/01"
-}
-
 
 void initLed() {
   #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
@@ -232,26 +228,19 @@ void runDefuseGame() {
   
 }
 
-void playRedSwitchTrack() {
-  int songCode = word(0x02, 1);
-  sendMp3Command(0X0F, songCode);
-}
-
-void playGreenSwitchTrack() {
-  int songCode = word(0x02, 1);
-  sendMp3Command(0X0F, songCode);
-}
 
 void switchToRed() {
   countingTeam = 1;
   setPixelsRed();
   playRedSwitchTrack();
+  //playMusicWithTrackSwitch();
 }
 
 void switchToGreen() {
   countingTeam = -1;
   setPixelsGreen();
   playGreenSwitchTrack();
+  //playMusicWithTrackSwitch();
 }
 
 void switchToNeutral() {
@@ -283,8 +272,20 @@ void countTeams() {
   }
 }
 
-void startGame(int newGameMode) {
+void startGameWithCode(int newGameMode) {
+
   gameMode = newGameMode;
+  startGame();
+}
+
+void startGame() {
+  playAttentionStartTrack();
+  calculateCurrentSec();
+ 
+  gameStartSec = currentSec;
+  
+  //playMusic();
+  
   gameStatus = GAME_RUNNING;
   setPixelsBlue();
 }
@@ -354,20 +355,35 @@ void selectGame() {
   Serial.println("selecting game...");
   if(isUuidMatch(currentCode, dominoGameCode)) {
     Serial.println("Domination mode selected");
-    switchToNeutral();
-    startGame(GAME_MODE_DOMINATION);
+    playDominationModeTrack();
+    resetDominationMode();
+    startGameWithCode(GAME_MODE_DOMINATION);
   }
 
   if(isUuidMatch(currentCode, defuseGameCode)) {
     Serial.println("Domination mode selected");
-    startGame(GAME_MODE_DEFUSE);
+   
+    startGameWithCode(GAME_MODE_DEFUSE);
   }
 
   if(isUuidMatch(currentCode, stopGameCode)) {
     Serial.println("stop game");
     stopGame();
   }
+
+  if(isUuidMatch(currentCode, startGameCode)) {
+    Serial.println("restart game");
+    resetDominationMode();
+    startGame();
+  }
+  
     
+}
+
+void resetDominationMode() {
+  teamRedScores =  0;
+  teamGreenScores = 0;
+  switchToNeutral();
 }
 
 void checkForSwitch() {
@@ -464,23 +480,59 @@ String formatScores(int scores) {
 }
 
 void checkForWinner() {
-  if (!(teamRedScores >= MAX_SCORES || teamGreenScores >= MAX_SCORES)) { // || outof time
+  Serial.println(currentSec - gameStartSec);
+  
+  if (!(teamRedScores >= MAX_SCORES || teamGreenScores >= MAX_SCORES ||  (currentSec - gameStartSec >= DOMINO_GAME_DURATION_SEC) )) {
+//  if (!(teamRedScores >= MAX_SCORES || teamGreenScores >= MAX_SCORES)) {
     return;
   }
+
+  
 
   gameStatus = GAME_STOPPED;
 
   if (teamRedScores == teamGreenScores) {
-    // draw;
+    // draw; // chose the last one
   } else if (teamRedScores > teamGreenScores) {
-    // red wins;
+    redWon();
   } else {
-    // green wins
+    greenWon();
   }
 
-  blinkGameIndicator();
-
+  //blinkGameIndicator();
 }
+
+void redWon() {
+  playRedWonTrack();
+  blinkRed();
+}
+
+void greenWon() {
+  playGreenWonTrack();
+  blinkGreen();
+}
+
+
+void blinkRed() {
+  for (int i = 0; i < 10; i++) {
+    turnOffPixels();
+    delay(500);
+    setPixelsRed();
+    delay(500);
+  }
+  setPixelsWhite();
+}
+
+void blinkGreen() {
+  for (int i = 0; i < 10; i++) {
+    turnOffPixels();
+    delay(500);
+    setPixelsGreen();
+    delay(500);
+  }
+  setPixelsWhite();
+}
+
 
 void blinkGameIndicator() {
   for (int i = 0; i < 10; i++) {
@@ -490,6 +542,7 @@ void blinkGameIndicator() {
     delay(500);
   }
 }
+
 
 
 void serialinit()
@@ -546,6 +599,10 @@ void setPixelsRed() {
   setPixelsColor(pixels.Color(255, 0, 0));
 }
 
+void setPixelsWhite() {
+  setPixelsColor(pixels.Color(255, 255, 255));
+}
+
 void setPixelsColor(uint32_t color){
    pixels.clear();
    for(int i=0;i<NUMPIXELS;i++){
@@ -553,6 +610,52 @@ void setPixelsColor(uint32_t color){
    }  
    pixels.show();
 }
+//
+//void playMusic() {
+//  sendMp3Command(CMD_PLAY_FOLDER, 0X0101); //запустить зацикленное проигрывание содержимого папки "/01"
+//  
+//}
+
+//void playMusicWithTrackSwitch() {
+//  playMusic();
+//  currentTrack++;
+//  for (int i = 0; i < currentTrack; i++) {
+//    sendMp3Command(CMD_NEXT, 0x0000);
+//  }
+//}
+
+void playAttentionStartTrack() {
+  int songCode = word(0x02, 12);
+  sendMp3Command(0X0F, songCode);
+  delay(5000);
+}
+
+void playDominationModeTrack() {
+  int songCode = word(0x02, 10);
+  sendMp3Command(0X0F, songCode);
+  delay(5000);
+}
+
+void playRedSwitchTrack() {
+  int songCode = word(0x02, 5);
+  sendMp3Command(0X0F, songCode);
+}
+
+void playGreenSwitchTrack() {
+  int songCode = word(0x02, 4);
+  sendMp3Command(0X0F, songCode);
+}
+
+void playGreenWonTrack() {
+  int songCode = word(0x02, 7);
+  sendMp3Command(0X0F, songCode);
+}
+
+void playRedWonTrack() {
+  int songCode = word(0x02, 8);
+  sendMp3Command(0X0F, songCode);
+}
+
 
 void sendMp3Command(int8_t command, int16_t dat)
 {
