@@ -6,6 +6,8 @@ int hallsensor = 2; //The pin location of the sensor
 int totalLiquid = 0;
 
 #define LED_PIN 13
+#define WATER_SENSOR_PIN A6
+#define WATER_MIN_LEVEL 680
 
 #define LIQUID_REQUIRED 50
 #define LIQUID_LEVEL_REQUIRED 1.5
@@ -22,6 +24,7 @@ void setup() //
 //pinMode(hallsensor, INPUT); //initializes digital pin 2 as an input
 Serial.begin(9600); //This is the setup function where the serial port is 
 pinMode(RELAY_PIN, OUTPUT);
+pinMode(WATER_SENSOR_PIN, INPUT);
 //pinMode(LED_PIN, OUTPUT);
 closeLock();
 //initialised,
@@ -52,10 +55,12 @@ if(Calc > 0){
 int liquidSensorValue = analogRead(A2);
   // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V):
 float liquidLevel = liquidSensorValue * (5.0 / 1023.0);
-Serial.println(liquidLevel);
+//Serial.println(liquidLevel);
+int waterLevel = analogRead(WATER_SENSOR_PIN); //digitalRead(WATER_SENSOR_PIN);
+Serial.println(waterLevel);
 
 //if(totalLiquid >= LIQUID_REQUIRED && !isDoorOpened){
-if(liquidLevel >= LIQUID_LEVEL_REQUIRED && !isDoorOpened){
+if( (liquidLevel >= LIQUID_LEVEL_REQUIRED || waterLevel < WATER_MIN_LEVEL) && !isDoorOpened){
   starOpenTimeRange = millis() / 1000;
   delay(100);
   openLock();
@@ -90,4 +95,3 @@ void openLock(){
   digitalWrite(RELAY_PIN, HIGH);
   //digitalWrite(LED_PIN, HIGH);
 }
-
