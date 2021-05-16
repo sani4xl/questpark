@@ -13,7 +13,7 @@
   #include <avr/power.h>
 #endif
 #define LED_PIN   8 // LED strip DI
-#define NUMPIXELS 8
+#define NUMPIXELS 32
 
 Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 
@@ -80,37 +80,72 @@ TM1638plus tm(TM_STB, TM_CLK , TM_DIO, high_freq);
 int currentTrack = 0;
 SoftwareSerial mp3Serial(MP3_TX, MP3_RX);
 
-static int8_t Send_buf[8] = {0} ;
+#define DISPLAY_LENGTH 8
+static int8_t Send_buf[DISPLAY_LENGTH] = {0} ;
 
-// game setup
-
-#define MAX_SCORES 10 //999
-#define CHAR_LENGTH_PER_TEAM 3
-#define DOMINO_GAME_DURATION_SEC 10
-
-int teamRedScores = 0;
-int teamGreenScores = 0;
-int countingTeam = 0; // 1 for red, -1 for green
-
-int gameStatus = 0;
-int gameMode = 0;
-
+/* 
+ *  GENERAL SETUP
+ */
 #define GAME_RUNNING 1
 #define GAME_STOPPED 0
 
 #define GAME_MODE_NONE 0
 #define GAME_MODE_DOMINATION 1
 #define GAME_MODE_DEFUSE 2
+#define GAME_MODE_ARTIFACT 3
 
-String gameIndicator = "";
+
+#define SCORE_TIME_GAP 1 // time between ticks to add score
+#define NON_ACTIVITY_TIME 5 // time before switch to neutral state
+
+#define CHAR_LENGTH_PER_TEAM 3
+
+
+int gameStatus = 0;
+int gameMode = 0;
+
+String gameIndicator = ""; // to display on screen
 
 int currentSec;
 int gameStartSec;
 int lastScoreSec;
 int lastActivitySec;
-#define SCORE_TIME_GAP 1 // time between ticks to add score
-#define NON_ACTIVITY_TIME 5 // time before switch to neutral state
 
+
+/*
+ * DOMINATION SETUP
+ */
+ #define DOMINO_GAME_DURATION_SEC 30
+ #define MAX_SCORES 10 //999
+ 
+int teamRedScores = 0;
+int teamGreenScores = 0;
+int countingTeam = 0; // 1 for red, -1 for green
+
+
+#define TEAM_RED 1
+#define TEAM_GREEN -1
+#define TEAM_NO 0
+
+/**
+ * DEFUSE SETUP
+ */
+ #define DEFUSE_GAME_DURATION_SEC 60
+ bool bombPlanted = false;
+ bool bombDefused = false;
+
+ /**
+  * ARTIFACT SETUP
+  */
+
+#define ARTIFACT_ACTIVITY_TIME 10 // time before deactivate artifact
+#define ARTIFACT_GAME_DURATION_SEC 60
+bool artifactActivated = false;  
+
+
+/* 
+ *  RFID CODES SETUP 
+ */
 byte *currentCode = NULL;
 
 struct Code {int c1; int c2; int c3; int c4;};
@@ -128,10 +163,22 @@ Code greenCodes[] = {
 
 const Code dominoGameCode = {7, 216, 65, 99};
 const Code defuseGameCode = {215, 76, 84, 98};
+const Code ARTI_GAME_MODE_CODE = {23, 71, 62, 99};
+
+
 const Code stopGameCode = {231, 105, 62, 99};
 const Code startGameCode = {103, 191, 66, 99};
 
+const Code BOMB_CODE = {135, 90, 83, 98};
+const Code KIT_CODE = {7, 222, 53, 99};
 
+const Code ARTIFACT_CODE = {7, 72, 54, 99};
+
+
+
+/**
+ * GAME LOGIC
+ */
 
 void setup() {
   serialinit();
@@ -157,8 +204,8 @@ void initMp3Player(){
   sendMp3Command(CMD_SEL_DEV, DEV_TF);//select the TF card  
   delay(200);//wait for 200ms
   //sendCommand(CMD_SET_VOLUME, 0X0F);//установить громкость в 15 (50%)
-//  sendMp3Command(CMD_SET_VOLUME, 0X16);//установить громкость в x1E=30 (100%)
-  sendMp3Command(CMD_SET_VOLUME, 0X06);//установить громкость в x1E=30 (100%)
+  sendMp3Command(CMD_SET_VOLUME, 0X1E);//установить громкость в x1E=30 (100%)
+//  sendMp3Command(CMD_SET_VOLUME, 0X06);//установить громкость в x1E=30 (100%)
   delay(200);
   Serial.println(F("MP3 initialized..."));
   
@@ -217,6 +264,9 @@ void runGame() {
     case GAME_MODE_DEFUSE:
       runDefuseGame();
       break;  
+    case GAME_MODE_ARTIFACT:
+      runArtifactGame();  
+      break;  
     default:
       return;
   }
@@ -224,10 +274,116 @@ void runGame() {
   displayGameIndicator();
 }
 
-void runDefuseGame() {
-  
+void runArtifactGame() {
+  int artifactSecLeft = ARTIFACT_GAME_DURATION_SEC - (currentSec - gameStartSec);
+  checkForArtifactAction();
+  checkForArtifactWinner(artifactSecLeft);
+  checkForArtifactDeactivation();
+
+  gameIndicator = formatTimer(artifactSecLeft);
 }
 
+void checkForArtifactAction() {
+  if (currentCode == NULL) {
+      return;
+    }
+
+    Serial.println("check for defuse action");
+
+    if(isUuidMatch(currentCode, ARTIFACT_CODE)) {
+      playArtefactActivatedTrack();
+      artifactActivated = true;
+      Serial.println("artifact activated");
+      setPixelsYellow();
+      lastActivitySec = currentSec;
+    }
+
+    if (checkRedMatch(currentCode) || checkGreenMatch(currentCode)) {
+      
+    } 
+
+}
+
+void checkForArtifactDeactivation() {
+  if (!(artifactActivated && (currentSec - lastActivitySec > ARTIFACT_ACTIVITY_TIME))) {
+    return;
+  }
+
+  Serial.println("deactivate artifact");
+  
+  artifactActivated = false;
+  switchToNeutral();
+}
+
+void checkForArtifactWinner(int artifactSecLeft) {
+  if (!( (artifactActivated && (countingTeam == TEAM_RED || countingTeam == TEAM_GREEN)) || artifactSecLeft <= 0)) {
+    return;
+  }
+  
+  if (artifactActivated && countingTeam == TEAM_RED) {
+    redWon();
+  } else if (artifactActivated && countingTeam == TEAM_GREEN) {
+    greenWon();
+  }
+  
+  stopGame();
+}
+
+void runDefuseGame() {
+ int defuseSecLeft = DEFUSE_GAME_DURATION_SEC - (currentSec - gameStartSec);
+ 
+ checkForDefuseAction();
+ checkForDefuseWinner(defuseSecLeft);
+ 
+
+ gameIndicator = formatTimer(defuseSecLeft);
+}
+
+void checkForDefuseWinner(int defuseSecLeft) {
+  if (!(bombDefused || defuseSecLeft <= 0)) {
+    return;
+  }
+
+ if (bombDefused) {
+    swatWon();
+  } if (bombPlanted) {
+    terroristsWon();
+  } else {
+    swatWon();
+  }
+
+  stopGame();
+}
+
+void terroristsWon() {
+  playTerroristWonTrack();
+  blinkRed();
+}
+
+void swatWon() {
+  playSwatWonTrack();
+  blinkGreen();
+}
+
+void checkForDefuseAction() {
+  if (currentCode == NULL) {
+      return;
+    }
+
+    Serial.println("check for defuse action");
+
+    if(isUuidMatch(currentCode, BOMB_CODE)) {
+      playBombPlantedTrack();
+      bombPlanted = true;
+      setPixelsRed();
+    }
+
+    if(isUuidMatch(currentCode, KIT_CODE) && bombPlanted) {
+      playBombDefusedTrack();
+      bombDefused = true;
+      setPixelsGreen();
+    }
+}
 
 void switchToRed() {
   countingTeam = 1;
@@ -244,7 +400,7 @@ void switchToGreen() {
 }
 
 void switchToNeutral() {
-  countingTeam = 0;
+  countingTeam = TEAM_NO;
   setPixelsBlue();
 }
 
@@ -256,16 +412,15 @@ void countTeams() {
 
   lastScoreSec = currentSec;
   
-  if (countingTeam > 0) { 
+  if (countingTeam == TEAM_RED) { 
     teamRedScores += countingTeam;
-  } else if (countingTeam < 0) { 
+  } else if (countingTeam == TEAM_GREEN) { 
     teamGreenScores -= countingTeam;
   }
   
   if (teamRedScores > MAX_SCORES) {
     teamRedScores = MAX_SCORES;
   }
-  
   
   if (teamGreenScores > MAX_SCORES) {
     teamGreenScores = MAX_SCORES;
@@ -291,6 +446,11 @@ void startGame() {
 }
 
 void stopGame() {
+  Serial.println(F("stopping game..."));
+  gameStatus = GAME_STOPPED;
+}
+
+void resetGame() {
   gameMode = GAME_MODE_NONE;
   gameStatus = GAME_STOPPED;
   turnOffPixels();
@@ -304,7 +464,7 @@ void runDominatorGame() {
   
   checkForSwitch();
   checkForNeutralMatch();
-  checkForWinner();
+  checkForDominationWinner();
 }
 
 void readCode() {
@@ -361,10 +521,19 @@ void selectGame() {
   }
 
   if(isUuidMatch(currentCode, defuseGameCode)) {
-    Serial.println("Domination mode selected");
-   
+    Serial.println("Defuse mode selected");
+    playDefuseModeTrack();
+    resetDefuseMode();
     startGameWithCode(GAME_MODE_DEFUSE);
   }
+
+  if(isUuidMatch(currentCode, ARTI_GAME_MODE_CODE)) {
+    Serial.println("Artifact mode selected");
+    playArtifactModeTrack();
+    resetArtifactMode();
+    startGameWithCode(GAME_MODE_ARTIFACT);
+  }
+
 
   if(isUuidMatch(currentCode, stopGameCode)) {
     Serial.println("stop game");
@@ -374,10 +543,21 @@ void selectGame() {
   if(isUuidMatch(currentCode, startGameCode)) {
     Serial.println("restart game");
     resetDominationMode();
+    resetDefuseMode();
+    resetArtifactMode();
     startGame();
   }
   
     
+}
+
+void resetArtifactMode() {
+  switchToNeutral();
+}
+
+void resetDefuseMode() {
+  bombPlanted = false;
+  bombDefused = false;
 }
 
 void resetDominationMode() {
@@ -387,12 +567,13 @@ void resetDominationMode() {
 }
 
 void checkForSwitch() {
-
     if (currentCode == NULL) {
       return;
     }
 
     Serial.println("check for team switch");
+
+    countingTeam = TEAM_NO;
       
     if (checkRedMatch(currentCode) || checkGreenMatch(currentCode)) {
       lastActivitySec = currentSec;
@@ -401,7 +582,7 @@ void checkForSwitch() {
 }
 
 void checkForNeutralMatch() {
-  if (countingTeam == 0 || currentSec - lastActivitySec < NON_ACTIVITY_TIME) {
+  if (countingTeam == TEAM_NO || currentSec - lastActivitySec < NON_ACTIVITY_TIME) {
     return;
   }
 
@@ -479,15 +660,22 @@ String formatScores(int scores) {
   return str;
 }
 
-void checkForWinner() {
-  Serial.println(currentSec - gameStartSec);
+String formatTimer(int scores) {
+  String str = String(scores);
+  int spaces = DISPLAY_LENGTH - str.length();
+  for(int i = 0; i < spaces; i++) {
+    str = " " + str;
+  }
+
+  return str;
+}
+
+void checkForDominationWinner() {
   
   if (!(teamRedScores >= MAX_SCORES || teamGreenScores >= MAX_SCORES ||  (currentSec - gameStartSec >= DOMINO_GAME_DURATION_SEC) )) {
 //  if (!(teamRedScores >= MAX_SCORES || teamGreenScores >= MAX_SCORES)) {
     return;
   }
-
-  
 
   gameStatus = GAME_STOPPED;
 
@@ -499,7 +687,7 @@ void checkForWinner() {
     greenWon();
   }
 
-  //blinkGameIndicator();
+  stopGame();
 }
 
 void redWon() {
@@ -599,6 +787,10 @@ void setPixelsRed() {
   setPixelsColor(pixels.Color(255, 0, 0));
 }
 
+void setPixelsYellow() {
+  setPixelsColor(pixels.Color(255, 255, 0));
+}
+
 void setPixelsWhite() {
   setPixelsColor(pixels.Color(255, 255, 255));
 }
@@ -624,10 +816,56 @@ void setPixelsColor(uint32_t color){
 //  }
 //}
 
-void playAttentionStartTrack() {
-  int songCode = word(0x02, 12);
+void playArtefactActivatedTrack() {
+  int songCode = word(0x02, 1);
+  sendMp3Command(0X0F, songCode);
+}
+
+void playBombDefusedTrack() {
+  int songCode = word(0x02, 2);
   sendMp3Command(0X0F, songCode);
   delay(5000);
+}
+
+void playBombPlantedTrack() {
+  int songCode = word(0x02, 3);
+  sendMp3Command(0X0F, songCode);
+}
+
+
+void playGreenSwitchTrack() {
+  int songCode = word(0x02, 4);
+  sendMp3Command(0X0F, songCode);
+}
+
+void playRedSwitchTrack() {
+  int songCode = word(0x02, 5);
+  sendMp3Command(0X0F, songCode);
+}
+
+void playNeutralityModeTrack() {
+  int songCode = word(0x02, 6);
+  sendMp3Command(0X0F, songCode);
+  delay(5000);
+}
+
+void playGreenWonTrack() {
+  int songCode = word(0x02, 7);
+  sendMp3Command(0X0F, songCode);
+  delay(5000);
+}
+
+void playRedWonTrack() {
+  int songCode = word(0x02, 8);
+  sendMp3Command(0X0F, songCode);
+  delay(5000);
+}
+
+
+void playArtifactModeTrack() {
+  int songCode = word(0x02, 9);
+  sendMp3Command(0X0F, songCode);
+  delay(6000);
 }
 
 void playDominationModeTrack() {
@@ -636,25 +874,29 @@ void playDominationModeTrack() {
   delay(5000);
 }
 
-void playRedSwitchTrack() {
-  int songCode = word(0x02, 5);
+void playDefuseModeTrack() {
+  int songCode = word(0x02, 11);
   sendMp3Command(0X0F, songCode);
+  delay(5000);
 }
 
-void playGreenSwitchTrack() {
-  int songCode = word(0x02, 4);
+void playAttentionStartTrack() {
+  int songCode = word(0x02, 12);
   sendMp3Command(0X0F, songCode);
+  delay(5000);
 }
 
-void playGreenWonTrack() {
+
+void playTerroristWonTrack() {
   int songCode = word(0x02, 7);
   sendMp3Command(0X0F, songCode);
 }
 
-void playRedWonTrack() {
+void playSwatWonTrack() {
   int songCode = word(0x02, 8);
   sendMp3Command(0X0F, songCode);
 }
+
 
 
 void sendMp3Command(int8_t command, int16_t dat)
