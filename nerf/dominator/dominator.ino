@@ -324,6 +324,8 @@ void checkForArtifactWinner(int artifactSecLeft) {
     redWon();
   } else if (artifactActivated && countingTeam == TEAM_GREEN) {
     greenWon();
+  } else {
+    noWinners();
   }
   
   stopGame();
@@ -681,6 +683,7 @@ void checkForDominationWinner() {
 
   if (teamRedScores == teamGreenScores) {
     // draw; // chose the last one
+    noWinners();
   } else if (teamRedScores > teamGreenScores) {
     redWon();
   } else {
@@ -688,6 +691,10 @@ void checkForDominationWinner() {
   }
 
   stopGame();
+}
+
+void noWinners() {
+  playNoWinnersTrack();
 }
 
 void redWon() {
@@ -888,15 +895,19 @@ void playAttentionStartTrack() {
 
 
 void playTerroristWonTrack() {
-  int songCode = word(0x02, 7);
+  int songCode = word(0x02, 15);
   sendMp3Command(0X0F, songCode);
 }
 
 void playSwatWonTrack() {
-  int songCode = word(0x02, 8);
+  int songCode = word(0x02, 14);
   sendMp3Command(0X0F, songCode);
 }
 
+void playNoWinnersTrack() {
+  int songCode = word(0x02, 16);
+  sendMp3Command(0X0F, songCode);
+}
 
 
 void sendMp3Command(int8_t command, int16_t dat)
