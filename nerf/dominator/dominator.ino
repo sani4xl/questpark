@@ -96,7 +96,7 @@ static int8_t Send_buf[DISPLAY_LENGTH] = {0} ;
 
 
 #define SCORE_TIME_GAP 1 // time between ticks to add score
-#define NON_ACTIVITY_TIME 5 // time before switch to neutral state
+#define NON_ACTIVITY_TIME 30 // in sec time before switch to neutral state
 
 #define CHAR_LENGTH_PER_TEAM 3
 
@@ -110,13 +110,15 @@ int currentSec;
 int gameStartSec;
 int lastScoreSec;
 int lastActivitySec;
+int bombActivitySec;
 
 
 /*
  * DOMINATION SETUP
  */
- #define DOMINO_GAME_DURATION_SEC 30
- #define MAX_SCORES 10 //999
+ #define DEFAULT_GAME_DURATION 600 // 10 min
+ #define DOMINO_GAME_DURATION_SEC DEFAULT_GAME_DURATION //30
+ #define MAX_SCORES 999
  
 int teamRedScores = 0;
 int teamGreenScores = 0;
@@ -130,16 +132,18 @@ int countingTeam = 0; // 1 for red, -1 for green
 /**
  * DEFUSE SETUP
  */
- #define DEFUSE_GAME_DURATION_SEC 60
+ #define DEFUSE_GAME_DURATION_SEC DEFAULT_GAME_DURATION
+ #define BOMB_EXPLODE_TIME 30
  bool bombPlanted = false;
  bool bombDefused = false;
+ 
 
  /**
   * ARTIFACT SETUP
   */
 
 #define ARTIFACT_ACTIVITY_TIME 10 // time before deactivate artifact
-#define ARTIFACT_GAME_DURATION_SEC 60
+#define ARTIFACT_GAME_DURATION_SEC DEFAULT_GAME_DURATION
 bool artifactActivated = false;  
 
 
@@ -152,7 +156,8 @@ struct Code {int c1; int c2; int c3; int c4;};
 
 
 Code redCodes[] = {
-  {20, 75, 226, 43}
+  {20, 75, 226, 43},
+  {90, 228, 45, 43}
 };
 
 Code greenCodes[] = {
@@ -222,7 +227,7 @@ void initLed() {
 
   pixels.begin();
 
-  turnOffPixels();
+  setPixelsWhite();
 }
 
 void initTimer() {
@@ -233,7 +238,6 @@ void initTimer() {
 void initDisplay() {
   tm.displayBegin();
   tm.brightness(8);
-  turnOffPixels();
 }
 
 void initRfid() {
@@ -332,23 +336,27 @@ void checkForArtifactWinner(int artifactSecLeft) {
 }
 
 void runDefuseGame() {
- int defuseSecLeft = DEFUSE_GAME_DURATION_SEC - (currentSec - gameStartSec);
+ 
  
  checkForDefuseAction();
- checkForDefuseWinner(defuseSecLeft);
+
+ int defuseSecLeft = DEFUSE_GAME_DURATION_SEC - (currentSec - gameStartSec);
+ int bombExplodeLeftSec = bombPlanted ? BOMB_EXPLODE_TIME - (currentSec - bombActivitySec) : 10000;
+ 
+ checkForDefuseWinner(defuseSecLeft, bombExplodeLeftSec);
  
 
  gameIndicator = formatTimer(defuseSecLeft);
 }
 
-void checkForDefuseWinner(int defuseSecLeft) {
-  if (!(bombDefused || defuseSecLeft <= 0)) {
+void checkForDefuseWinner(int defuseSecLeft, int bombExplodeLeftSec) {
+  if (!(bombExplodeLeftSec <= 0 || defuseSecLeft <= 0)) {
     return;
   }
 
- if (bombDefused) {
-    swatWon();
-  } if (bombPlanted) {
+  if (bombDefused) {
+    //swatWon();
+  } else if (bombPlanted) {
     terroristsWon();
   } else {
     swatWon();
@@ -377,12 +385,16 @@ void checkForDefuseAction() {
     if(isUuidMatch(currentCode, BOMB_CODE)) {
       playBombPlantedTrack();
       bombPlanted = true;
+      bombDefused = false;
+      calculateCurrentSec();
+      bombActivitySec = currentSec;
       setPixelsRed();
     }
 
     if(isUuidMatch(currentCode, KIT_CODE) && bombPlanted) {
       playBombDefusedTrack();
       bombDefused = true;
+      bombPlanted = false;
       setPixelsGreen();
     }
 }
@@ -455,7 +467,7 @@ void stopGame() {
 void resetGame() {
   gameMode = GAME_MODE_NONE;
   gameStatus = GAME_STOPPED;
-  turnOffPixels();
+  setPixelsWhite();
   displayNothing();
 }
 
