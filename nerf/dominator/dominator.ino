@@ -116,7 +116,7 @@ int bombActivitySec;
 /*
  * DOMINATION SETUP
  */
- #define DEFAULT_GAME_DURATION 600 // 10 min
+ #define DEFAULT_GAME_DURATION 300 // 5 min
  #define DOMINO_GAME_DURATION_SEC DEFAULT_GAME_DURATION //30
  #define MAX_SCORES 999
  
@@ -132,7 +132,7 @@ int countingTeam = 0; // 1 for red, -1 for green
 /**
  * DEFUSE SETUP
  */
- #define DEFUSE_GAME_DURATION_SEC DEFAULT_GAME_DURATION
+ #define DEFUSE_GAME_DURATION_SEC 420 // 7 min DEFAULT_GAME_DURATION
  #define BOMB_EXPLODE_TIME 30
  bool bombPlanted = false;
  bool bombDefused = false;
@@ -146,24 +146,31 @@ int countingTeam = 0; // 1 for red, -1 for green
 #define ARTIFACT_GAME_DURATION_SEC DEFAULT_GAME_DURATION
 bool artifactActivated = false;  
 
-
+struct Code {int c1; int c2; int c3; int c4;};
 /* 
  *  RFID CODES SETUP 
  */
 byte *currentCode = NULL;
-
-struct Code {int c1; int c2; int c3; int c4;};
+Code prevCode = {0,0,0,0};
 
 
 Code redCodes[] = {
   {20, 75, 226, 43},
-  {90, 228, 45, 43}
+  {90, 228, 45, 43},
+  {151, 195, 194, 4},
+  {55, 187, 190, 4},
+  {103, 87, 176, 4},
+  {71, 97, 194, 4}
 };
 
 Code greenCodes[] = {
   {103, 155, 194, 95},
   {215, 3, 73, 98},
-  {247, 254, 70, 99}
+  {247, 254, 70, 99},
+  {103, 168, 190, 4},
+  {87, 61, 194, 4},
+  {135, 202, 194, 4},
+  {151, 44, 186, 4}
 };
 
 const Code dominoGameCode = {7, 216, 65, 99};
@@ -354,8 +361,13 @@ void checkForDefuseWinner(int defuseSecLeft, int bombExplodeLeftSec) {
     return;
   }
 
+  Serial.println("check for defuse winner");
+  Serial.println(bombExplodeLeftSec);
+  Serial.println(defuseSecLeft);
+  
+
   if (bombDefused) {
-    //swatWon();
+    swatWon();
   } else if (bombPlanted) {
     terroristsWon();
   } else {
@@ -363,15 +375,22 @@ void checkForDefuseWinner(int defuseSecLeft, int bombExplodeLeftSec) {
   }
 
   stopGame();
+  restartGame();
 }
 
 void terroristsWon() {
   playTerroristWonTrack();
+  playTerroristWonTrack();
+  playEndGameTrack();
+  playEndGameTrack();
   blinkRed();
 }
 
 void swatWon() {
   playSwatWonTrack();
+  playSwatWonTrack();
+  playEndGameTrack();
+  playEndGameTrack();
   blinkGreen();
 }
 
@@ -462,6 +481,13 @@ void startGame() {
 void stopGame() {
   Serial.println(F("stopping game..."));
   gameStatus = GAME_STOPPED;
+  prevCode = (Code) {0,0,0,0};
+}
+
+void restartGame() {
+ return; // make based on time on delay
+ playCountdown();  
+ startGame(); 
 }
 
 void resetGame() {
@@ -519,6 +545,15 @@ void readCode() {
     rfid.PCD_StopCrypto1();
     
     delay(50);
+    //Serial.println(prevCode[0]);
+
+    if (isUuidMatch(currentCode, prevCode)) {
+      Serial.println("previous code match");
+      currentCode = NULL;
+      return;
+    }
+
+    prevCode = (Code) {currentCode[0], currentCode[1], currentCode[2], currentCode[3]};
 }
 
 void selectGame() {
@@ -552,6 +587,7 @@ void selectGame() {
   if(isUuidMatch(currentCode, stopGameCode)) {
     Serial.println("stop game");
     stopGame();
+    playEndGameTrack();
   }
 
   if(isUuidMatch(currentCode, startGameCode)) {
@@ -653,6 +689,21 @@ bool isUuidMatch(byte *uidByte, Code code) {
     int(uidByte[3]) == code.c4;
 }
 
+bool isUuidMatchUuid(byte *uidByte, byte *uidByte2) {   
+  if (uidByte2 == NULL) {
+    return false;
+  }
+
+  Serial.println(int(uidByte[0]));
+  Serial.println(int(uidByte2[0]));
+  
+  return
+    int(uidByte[0]) == int(uidByte2[0]) &&
+    int(uidByte[1]) == int(uidByte2[1]) &&
+    int(uidByte[2]) == int(uidByte2[2]) &&
+    int(uidByte[3]) == int(uidByte2[3]);
+}
+
 void displayGameIndicator() {
   int str_len = gameIndicator.length() + 1;
   char char_array[str_len];
@@ -703,6 +754,7 @@ void checkForDominationWinner() {
   }
 
   stopGame();
+  restartGame();
 }
 
 void noWinners() {
@@ -711,11 +763,17 @@ void noWinners() {
 
 void redWon() {
   playRedWonTrack();
+  playRedWonTrack();
+  playEndGameTrack();
+  playEndGameTrack();
   blinkRed();
 }
 
 void greenWon() {
   playGreenWonTrack();
+  playGreenWonTrack();
+  playEndGameTrack();
+  playEndGameTrack();
   blinkGreen();
 }
 
@@ -905,20 +963,33 @@ void playAttentionStartTrack() {
   delay(5000);
 }
 
+void playEndGameTrack() {
+  int songCode = word(0x02, 13);
+  sendMp3Command(0X0F, songCode);
+  delay(5000);
+}
 
 void playTerroristWonTrack() {
   int songCode = word(0x02, 15);
   sendMp3Command(0X0F, songCode);
+  delay(5000);
 }
 
 void playSwatWonTrack() {
   int songCode = word(0x02, 14);
   sendMp3Command(0X0F, songCode);
+  delay(5000);
 }
 
 void playNoWinnersTrack() {
   int songCode = word(0x02, 16);
   sendMp3Command(0X0F, songCode);
+}
+
+void playCountdown() {
+  int songCode = word(0x02, 17);
+  sendMp3Command(0X0F, songCode);
+  delay(30000);
 }
 
 
