@@ -100,6 +100,8 @@ static int8_t Send_buf[DISPLAY_LENGTH] = {0} ;
 
 #define CHAR_LENGTH_PER_TEAM 3
 
+#define AUTORESTART_LENGTH 30 // sec
+
 
 int gameStatus = 0;
 int gameMode = 0;
@@ -108,15 +110,17 @@ String gameIndicator = ""; // to display on screen
 
 int currentSec;
 int gameStartSec;
+int autoRestartSec; // sec countdown started with
 int lastScoreSec;
 int lastActivitySec;
 int bombActivitySec;
 
+bool autoRestartActive = false;
 
 /*
  * DOMINATION SETUP
  */
- #define DEFAULT_GAME_DURATION 300 // 5 min
+ #define DEFAULT_GAME_DURATION 600 // sec -> 10 min
  #define DOMINO_GAME_DURATION_SEC DEFAULT_GAME_DURATION //30
  #define MAX_SCORES 999
  
@@ -132,7 +136,7 @@ int countingTeam = 0; // 1 for red, -1 for green
 /**
  * DEFUSE SETUP
  */
- #define DEFUSE_GAME_DURATION_SEC 420 // 7 min DEFAULT_GAME_DURATION
+ #define DEFUSE_GAME_DURATION_SEC DEFAULT_GAME_DURATION // 7 min DEFAULT_GAME_DURATION
  #define BOMB_EXPLODE_TIME 30
  bool bombPlanted = false;
  bool bombDefused = false;
@@ -204,6 +208,7 @@ void setup() {
 
 void loop() {
   calculateCurrentSec();
+  checkAutoRestart();
   readCode();
   selectGame();
   runGame();
@@ -467,6 +472,7 @@ void startGameWithCode(int newGameMode) {
 }
 
 void startGame() {
+  autoRestartActive = false;
   playAttentionStartTrack();
   calculateCurrentSec();
  
@@ -484,13 +490,35 @@ void stopGame() {
   prevCode = (Code) {0,0,0,0};
 }
 
+void checkAutoRestart() {
+  if (!autoRestartActive) return;
+
+  if (getCurrentSec() - autoRestartSec < AUTORESTART_LENGTH) {
+    return;
+  }
+
+  Serial.println("Auto-restarting...");
+  
+  autoRestartActive = false;
+  startGame(); 
+}
+
+int getCurrentSec() {
+  return millis() / 1000;
+}
+
 void restartGame() {
- return; // make based on time on delay
+ 
+ Serial.println("Auto-restart activated");
  playCountdown();  
- startGame(); 
+
+ autoRestartSec = getCurrentSec();
+ autoRestartActive = true;
+ 
 }
 
 void resetGame() {
+  autoRestartActive = false;
   gameMode = GAME_MODE_NONE;
   gameStatus = GAME_STOPPED;
   setPixelsWhite();
@@ -989,7 +1017,7 @@ void playNoWinnersTrack() {
 void playCountdown() {
   int songCode = word(0x02, 17);
   sendMp3Command(0X0F, songCode);
-  delay(30000);
+  //delay(30000);
 }
 
 
