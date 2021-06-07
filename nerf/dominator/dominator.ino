@@ -136,7 +136,7 @@ int countingTeam = 0; // 1 for red, -1 for green
 /**
  * DEFUSE SETUP
  */
- #define DEFUSE_GAME_DURATION_SEC DEFAULT_GAME_DURATION // 7 min DEFAULT_GAME_DURATION
+ #define DEFUSE_GAME_DURATION_SEC 10 //DEFAULT_GAME_DURATION // 7 min DEFAULT_GAME_DURATION
  #define BOMB_EXPLODE_TIME 30
  bool bombPlanted = false;
  bool bombDefused = false;
@@ -381,9 +381,11 @@ void checkForDefuseWinner(int defuseSecLeft, int bombExplodeLeftSec) {
 
   stopGame();
   restartGame();
+  resetDefuseMode();
 }
 
 void terroristsWon() {
+  playBoom();
   playTerroristWonTrack();
   playTerroristWonTrack();
   playEndGameTrack();
@@ -477,9 +479,6 @@ void startGame() {
   calculateCurrentSec();
  
   gameStartSec = currentSec;
-  
-  //playMusic();
-  
   gameStatus = GAME_RUNNING;
   setPixelsBlue();
 }
@@ -615,11 +614,13 @@ void selectGame() {
   if(isUuidMatch(currentCode, stopGameCode)) {
     Serial.println("stop game");
     stopGame();
+    resetRestart();
     playEndGameTrack();
   }
 
   if(isUuidMatch(currentCode, startGameCode)) {
     Serial.println("restart game");
+    resetRestart();
     resetDominationMode();
     resetDefuseMode();
     resetArtifactMode();
@@ -627,6 +628,10 @@ void selectGame() {
   }
   
     
+}
+
+void resetRestart() {
+  autoRestartActive = false;
 }
 
 void resetArtifactMode() {
@@ -783,6 +788,7 @@ void checkForDominationWinner() {
 
   stopGame();
   restartGame();
+  resetDominationMode();
 }
 
 void noWinners() {
@@ -1018,6 +1024,12 @@ void playCountdown() {
   int songCode = word(0x02, 17);
   sendMp3Command(0X0F, songCode);
   //delay(30000);
+}
+
+void playBoom() {
+  int songCode = word(0x02, 18);
+  sendMp3Command(0X0F, songCode);
+  delay(4000);
 }
 
 
