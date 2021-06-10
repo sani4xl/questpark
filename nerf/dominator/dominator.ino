@@ -136,7 +136,7 @@ int countingTeam = 0; // 1 for red, -1 for green
 /**
  * DEFUSE SETUP
  */
- #define DEFUSE_GAME_DURATION_SEC 10 //DEFAULT_GAME_DURATION // 7 min DEFAULT_GAME_DURATION
+ #define DEFUSE_GAME_DURATION_SEC DEFAULT_GAME_DURATION // 7 min DEFAULT_GAME_DURATION
  #define BOMB_EXPLODE_TIME 30
  bool bombPlanted = false;
  bool bombDefused = false;
