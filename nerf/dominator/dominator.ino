@@ -100,7 +100,7 @@ static int8_t Send_buf[DISPLAY_LENGTH] = {0} ;
 
 #define CHAR_LENGTH_PER_TEAM 3
 
-#define AUTORESTART_LENGTH 30 // sec
+#define AUTORESTART_LENGTH 60 // sec
 
 
 int gameStatus = 0;
